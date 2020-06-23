@@ -19,3 +19,9 @@ def load_free_field_raw_file(file_index):
     R = R.reshape((-1, NUM_OF_CHANNELS, NUM_OF_CHANNELS))
     R = np.transpose(R, axes=(0, 2, 1))
     return R
+
+
+def load_free_field_frequencies():
+    file_name = 'frequencies.txt'
+    file_path = os.path.join(FREE_FIELD_RAW_DATA_FOLDER, file_name)
+    return np.loadtxt(file_path)

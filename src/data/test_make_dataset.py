@@ -10,3 +10,10 @@ class Test(TestCase):
         self.assertAlmostEqual(R[0, 0, 0], 0.020269437564138)
         self.assertAlmostEqual(np.imag(R[0, 1, 0]), -0.011099281007683)
         self.assertAlmostEqual(np.imag(R[26, 2, 4]), -0.019799927271249)
+
+    def test_load_free_field_frequencies(self):
+        from src.data.make_dataset import load_free_field_frequencies
+        f = load_free_field_frequencies()
+        self.assertEqual(f.shape[0], 513)
+        self.assertEqual(f[0], 0)
+        self.assertAlmostEqual(f[15], 703.125)

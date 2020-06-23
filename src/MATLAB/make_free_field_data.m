@@ -10,11 +10,13 @@ fs = zeros(num_of_files, 1);
 for i=1:num_of_files
     [anm, fs(i), doa(i,:)] = free_field_simulator(length_sec, N);
     [R, freq] = calculate_narrowband_scm(anm, fs(i));
+    v = [real(R(:)).'; imag(R(:)).'];
     file_path(i) = fullfile(folder_path, sprintf("%04d.bin", i)); 
     fid = fopen(file_path(i), 'w');
-    fwrite(fid, R);
+    fwrite(fid, v(:), 'double');
 end
-info = table(file_path, fs, doa(:,1), doa(:,2), 'VariableNames', ["file_path","fs","elevation","azimuth"]);
+info = table(file_path, fs, doa(:,1), doa(:,2), repmat(size(anm,2),num_of_files,1),...
+    'VariableNames', ["file_path","fs","elevation","azimuth", "num_of_channels"]);
 writetable(info, fullfile(folder_path, "info.csv"));
 writematrix(freq, fullfile(folder_path, "frequencies.txt"));
 

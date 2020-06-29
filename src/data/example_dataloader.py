@@ -1,6 +1,6 @@
 import os
 from torch.utils.data import DataLoader
-from data.base_dataset import BasicDataset
+from src.data.base_dataset import BasicDataset
 
 
 path = os.path.join(os.path.dirname(__file__), 'raw', 'free-field')

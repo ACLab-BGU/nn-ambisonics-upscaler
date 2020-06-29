@@ -1,6 +1,7 @@
 from typing import Tuple
 
 import numpy as np
+import torch
 import torch.utils.data as data
 import glob
 import os
@@ -17,7 +18,8 @@ def downgrade_scm(scm, sh_order, axis=(0, 1)):
     :return: a downgraded SCM
     """
 
-    tuple_slice = [slice(None)] * scm.ndim
+    ndim = scm.ndimension() if type(scm)==torch.Tensor else scm.ndim
+    tuple_slice = [slice(None)] * ndim
     tuple_slice[axis[0]] = slice((sh_order+1)**2)
     tuple_slice[axis[1]] = slice((sh_order+1)**2)
     scm_out = scm[tuple(tuple_slice)]

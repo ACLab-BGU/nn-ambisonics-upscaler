@@ -9,11 +9,11 @@ NUM_OF_CHANNELS = (6 + 1) ** 2
 def load_free_field_raw_file(file_index):
     file_name = '%04d.bin' % file_index
     file_path = os.path.join(FREE_FIELD_RAW_DATA_FOLDER, file_name)
-    data = open_convert_raw_file(file_path)
+    data = open_and_convert_raw_file(file_path)
     return data
 
 
-def open_convert_raw_file(file_path):
+def open_and_convert_raw_file(file_path):
     # read from file
     data = np.fromfile(file_path, dtype=np.double)
 

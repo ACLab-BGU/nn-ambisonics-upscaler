@@ -3,7 +3,7 @@ import torch.utils.data as data
 import glob
 import os
 
-from src.data.make_dataset import open_convert_raw_file, load_free_field_frequencies
+from src.data.make_dataset import open_and_convert_raw_file, load_free_field_frequencies
 
 
 def downgrade_scm(scm, sh_order, axis=(0, 1)):
@@ -50,7 +50,7 @@ class BasicDataset(data.Dataset):
 
         # load all files to memory and form the database
         for fn in self.filenames:
-            self.samples.append(open_convert_raw_file(fn))
+            self.samples.append(open_and_convert_raw_file(fn))
 
     def __getitem__(self, item):
         """
@@ -61,7 +61,7 @@ class BasicDataset(data.Dataset):
         if self.preload_flag:
             sample = self.samples[item]
         else:
-            sample = open_convert_raw_file(self.filenames[item])
+            sample = open_and_convert_raw_file(self.filenames[item])
 
         # generate target/label: decouple real and imaginary parts of sample
         target = np.concatenate((np.real(sample[np.newaxis]), np.imag(sample[np.newaxis])), axis=0)

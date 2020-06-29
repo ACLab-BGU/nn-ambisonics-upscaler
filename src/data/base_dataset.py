@@ -1,3 +1,5 @@
+from typing import Tuple
+
 import numpy as np
 import torch.utils.data as data
 import glob
@@ -52,7 +54,7 @@ class BasicDataset(data.Dataset):
         for fn in self.filenames:
             self.samples.append(open_and_convert_raw_file(fn))
 
-    def __getitem__(self, item):
+    def __getitem__(self, item: int):
         """
         Get a sample from the dataset
         """

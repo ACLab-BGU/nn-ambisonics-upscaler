@@ -1,9 +1,9 @@
-from typing import Tuple
-
-import numpy as np
-import torch.utils.data as data
 import glob
 import os
+
+import numpy as np
+import torch
+import torch.utils.data as data
 
 from src.data.make_dataset import open_and_convert_raw_file, load_free_field_frequencies
 
@@ -17,9 +17,10 @@ def downgrade_scm(scm, sh_order, axis=(0, 1)):
     :return: a downgraded SCM
     """
 
-    tuple_slice = [slice(None)] * scm.ndim
-    tuple_slice[axis[0]] = slice((sh_order+1)**2)
-    tuple_slice[axis[1]] = slice((sh_order+1)**2)
+    ndim = scm.ndimension() if type(scm) == torch.Tensor else scm.ndim
+    tuple_slice = [slice(None)] * ndim
+    tuple_slice[axis[0]] = slice((sh_order + 1) ** 2)
+    tuple_slice[axis[1]] = slice((sh_order + 1) ** 2)
     scm_out = scm[tuple(tuple_slice)]
 
     return scm_out
@@ -38,6 +39,7 @@ class BasicDataset(data.Dataset):
         self.preload_flag = preload
         self.sh_order = input_sh_order
         self.filenames = glob.glob(os.path.join(root, '*.bin'))  # get list of all bin files in the root folder
+        assert len(self.filenames) > 0, 'data folder is empty'
         self.len = len(self.filenames)
         self.frequencies = load_free_field_frequencies()  # frequencies of each SCM in the dataset
 
@@ -67,16 +69,20 @@ class BasicDataset(data.Dataset):
 
         # generate target/label: decouple real and imaginary parts of sample
         target = np.concatenate((np.real(sample[np.newaxis]), np.imag(sample[np.newaxis])), axis=0)
+        target = target.transpose([1, 0, 2, 3])
+
+        # convert to torch tensor
+        target = torch.from_numpy(target)
 
         # generate input data
-        input_data = downgrade_scm(target, self.sh_order, axis=(2, 3))
+        inputs = downgrade_scm(target, self.sh_order, axis=(2, 3))
 
         # perform some transformation
         if self.transform:
-            input_data = self.transform(input_data)
+            inputs = self.transform(inputs)
 
         # return sample
-        return input_data, target
+        return inputs, target
 
     def __len__(self):
         """

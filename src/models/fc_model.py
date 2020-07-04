@@ -7,7 +7,6 @@ from torch import optim
 from torch.utils.data import DataLoader, random_split
 
 from src.data.base_dataset import BasicDatasetLT
-from src.options import EasyDict
 
 
 class BaseModel(nn.Module):
@@ -30,6 +29,7 @@ class BaseModel(nn.Module):
         return x
 
 
+# noinspection PyAttributeOutsideInit,PyAttributeOutsideInit
 class BaseModelLT(LightningModule):
     def __init__(self, opts):
         # REQUIRED
@@ -39,14 +39,12 @@ class BaseModelLT(LightningModule):
         self.opts = opts
 
         # save hyperparameters for logging
-        opts = dict(opts)
         self.save_hyperparameters('opts')
-        opts = EasyDict(opts)
 
         # define network parameters
-        if np.isscalar(opts.hidden_sizes):
-            opts.hidden_sizes = [opts.hidden_sizes] * opts.hidden_layers
-        sizes = [opts.input_size, *opts.hidden_sizes, opts.output_size]
+        if np.isscalar(opts['hidden_sizes']):
+            opts['hidden_sizes'] = [opts['hidden_sizes']] * opts['hidden_layers']
+        sizes = [opts['input_size'], *opts['hidden_sizes'], opts['output_size']]
         self.linears = nn.ModuleList([nn.Linear(in_size, out_size)
                                       for in_size, out_size in zip(sizes, sizes[1:])])
 
@@ -58,37 +56,37 @@ class BaseModelLT(LightningModule):
             x = layer(x)
             if layer != self.linears[-1]:
                 x = F.relu(x)
-        x = x.view([x.shape[0], *self.opts.output_shape])
+        x = x.view([x.shape[0], *self.opts['output_shape']])
         return x
 
     def configure_optimizers(self):
         # REQUIRED
-        return optim.Adam(self.parameters(), lr=self.opts.lr)
+        return optim.Adam(self.parameters(), lr=self.opts['lr'])
 
     # ----- Data Loaders -----
 
     def setup(self, stage):
         # train/val split
-        assert np.sum(self.opts.train_val_split)==1, 'invalid split arguments'
-        dataset = BasicDatasetLT(self.opts.data_path, train=True)
-        train_size = round(self.opts.train_val_split[0] * len(dataset))
+        assert np.sum(self.opts['train_val_split'])==1, 'invalid split arguments'
+        dataset = BasicDatasetLT(self.opts['data_path'], train=True)
+        train_size = round(self.opts['train_val_split'][0] * len(dataset))
         val_size = len(dataset) - train_size
         self.dataset_train, self.dataset_val = random_split(dataset, [train_size, val_size])
 
     def train_dataloader(self):
         # REQUIRED
-        loader = DataLoader(self.dataset_train, batch_size=self.opts.batch_size, num_workers=self.opts.num_workers)
+        loader = DataLoader(self.dataset_train, batch_size=self.opts['batch_size'], num_workers=self.opts['num_workers'])
         return loader
 
     def val_dataloader(self):
         # OPTIONAL
-        loader = DataLoader(self.dataset_val, batch_size=self.opts.batch_size, num_workers=self.opts.num_workers)
+        loader = DataLoader(self.dataset_val, batch_size=self.opts['batch_size'], num_workers=self.opts['num_workers'])
         return loader
 
     def test_dataloader(self):
         # OPTIONAL
-        dataset = BasicDatasetLT(self.opts.data_path, train=False)
-        loader = DataLoader(dataset, batch_size=self.opts.batch_size, num_workers=self.opts.num_workers)
+        dataset = BasicDatasetLT(self.opts['data_path'], train=False)
+        loader = DataLoader(dataset, batch_size=self.opts['batch_size'], num_workers=self.opts['num_workers'])
         return loader
 
     # ----- Training Loop -----
@@ -96,7 +94,7 @@ class BaseModelLT(LightningModule):
         # REQUIRED
         x, y = batch
         y_pred = self(x)
-        loss = self.opts.loss(y_pred, y)
+        loss = self.opts['loss'](y_pred, y)
 
         return {'loss': loss}
 
@@ -112,7 +110,7 @@ class BaseModelLT(LightningModule):
         # OPTIONAL
         x, y = batch
         y_pred = self(x)
-        loss = self.opts.loss(y_pred, y)
+        loss = self.opts['loss'](y_pred, y)
 
         return {'val_loss': loss}
 
@@ -128,7 +126,7 @@ class BaseModelLT(LightningModule):
         # OPTIONAL
         x, y = batch
         y_pred = self(x)
-        loss = self.opts.loss(y_pred, y)
+        loss = self.opts['loss'](y_pred, y)
 
         return {'test_loss': loss}
 

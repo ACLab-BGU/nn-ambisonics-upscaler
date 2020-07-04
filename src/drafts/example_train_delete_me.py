@@ -1,7 +1,6 @@
 import numpy as np
 import torch
 from torch import nn
-from torch.optim import optimizer
 from torch.utils.data import DataLoader
 
 from src.data.base_dataset import BasicDataset

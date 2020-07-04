@@ -26,6 +26,7 @@ def open_and_convert_raw_file(file_path):
 
     return data
 
+
 def load_free_field_frequencies():
     file_name = 'frequencies.txt'
     file_path = os.path.join(FREE_FIELD_RAW_DATA_FOLDER, file_name)

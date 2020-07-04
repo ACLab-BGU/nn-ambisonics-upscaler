@@ -90,6 +90,7 @@ class BasicDataset(data.Dataset):
         """
         return self.len
 
+
 class BasicDatasetLT(data.Dataset):
     def __init__(self, root, transform=None, preload=False, input_sh_order=3, dtype=torch.float32, train=True):
 

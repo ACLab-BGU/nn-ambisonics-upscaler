@@ -1,11 +1,11 @@
 from pytorch_lightning import Trainer
 from pytorch_lightning.loggers import TensorBoardLogger
-from torch import nn
 
 from src.models.fc_model import BaseModelLT
 from src.options import prepare_opts
 
-default_opts = {
+default_config_path = "/Users/ranweisman/PycharmProjects/nn-ambisonics-upscaler/src/options/fc_default_config.yaml"
+config = {
     # ---folders---
     "data_path": '/Users/ranweisman/Google Drive/My Drive/My Documents/MATLAB/Research/nn-ambisonics-upscaler/raw/free-field',
     "logs_path": '/Users/ranweisman/PycharmProjects/nn-ambisonics-upscaler/experiments',
@@ -15,7 +15,6 @@ default_opts = {
     "output_shape": [2,49,49], # TODO: fix hardcoding
     "hidden_layers": 3,
     "hidden_sizes": [1600,2700,3800],
-    "loss": nn.MSELoss(),
     # ---data---
     # "dtype": torch.float32, # TODO: implement (does errors in saving hyperparameters)
     "transform": None,
@@ -44,10 +43,12 @@ row_log_interval (How often to add logging rows (does not write to disk)
 resume_from_checkpoint (to resume training from a specific checkpoint pass in the path here. This can be a URL.)
 """
 
-opts = dict(prepare_opts(default_opts))
-model = BaseModelLT(opts)
-logger = TensorBoardLogger(opts['logs_path'],name='my_model_name')
-trainer = Trainer(weights_summary='full', max_epochs=opts['max_epochs'], gpus=opts['gpus'],
-                  default_root_dir=opts['logs_path'], logger=logger)
-trainer.fit(model)
-trainer.test()
+if __name__ == '__main__':
+    # opts = dict(prepare_opts(default_config_path,config))
+    opts = dict(prepare_opts(config))
+    model = BaseModelLT(opts)
+    logger = TensorBoardLogger(opts['logs_path'],name='my_model_name')
+    trainer = Trainer(weights_summary='full', max_epochs=opts['max_epochs'], gpus=opts['gpus'],
+                      default_root_dir=opts['logs_path'], logger=logger)
+    trainer.fit(model)
+    trainer.test()

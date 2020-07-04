@@ -47,7 +47,7 @@ class BaseModelLT(LightningModule):
         sizes = [opts['input_size'], *opts['hidden_sizes'], opts['output_size']]
         self.linears = nn.ModuleList([nn.Linear(in_size, out_size)
                                       for in_size, out_size in zip(sizes, sizes[1:])])
-
+        self.loss = nn.MSELoss()
 
     def forward(self, x):
         # REQUIRED
@@ -94,7 +94,7 @@ class BaseModelLT(LightningModule):
         # REQUIRED
         x, y = batch
         y_pred = self(x)
-        loss = self.opts['loss'](y_pred, y)
+        loss = self.loss(y_pred, y)
 
         return {'loss': loss}
 
@@ -110,7 +110,7 @@ class BaseModelLT(LightningModule):
         # OPTIONAL
         x, y = batch
         y_pred = self(x)
-        loss = self.opts['loss'](y_pred, y)
+        loss = self.loss(y_pred, y)
 
         return {'val_loss': loss}
 
@@ -126,7 +126,7 @@ class BaseModelLT(LightningModule):
         # OPTIONAL
         x, y = batch
         y_pred = self(x)
-        loss = self.opts['loss'](y_pred, y)
+        loss = self.loss(y_pred, y)
 
         return {'test_loss': loss}
 

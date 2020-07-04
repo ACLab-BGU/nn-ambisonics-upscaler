@@ -2,6 +2,8 @@ import json
 import os
 import sys
 
+import yaml
+
 
 class EasyDict(dict):
     def __init__(self, *args, **kwargs): super().__init__(*args, **kwargs)
@@ -14,8 +16,14 @@ class EasyDict(dict):
 
 
 def read_json(path):
+    assert os.path.exists(path)
     with open(path, "r") as f:
         return json.load(f)
+
+def read_yaml(path):
+    assert os.path.exists(path)
+    with open(path, 'r') as stream:
+         return yaml.safe_load(stream)
 
 
 def update_opts_with_defaults(opts, defaults):
@@ -39,22 +47,24 @@ def update_opts_with_flags(opts):
     return opts
 
 
-def prepare_opts(defaults, config_path=None, with_flags=True, print_flag=True):
-    # use config file
-    if config_path is not None:
-        assert os.path.exists(config_path)
-        opts = EasyDict(read_json(config_path))
-    else:
-        opts = EasyDict(defaults)
+def prepare_opts(default_config, config=None, with_flags=True, print_flag=True):
+    # open and parse in case of files
+    if type(default_config) == str:
+        default_config = EasyDict(read_yaml(default_config))
+    if type(config) == str:
+        config = EasyDict(read_yaml(config))
+    # in case of no config input
+    elif config is None:
+        config = default_config
 
-    # update options
-    opts = update_opts_with_defaults(opts, defaults)
+    # update config according to defaults and command-line flags
+    config = update_opts_with_defaults(config, default_config)
     if with_flags:
-        opts = update_opts_with_flags(opts)
+        config = update_opts_with_flags(config)
 
     # print
     if print_flag:
         print("Training parameters: ")
-        print("\n".join([k + ": " + str(v) for k, v in opts.items()]))
+        print("\n".join([k + ": " + str(v) for k, v in config.items()]))
 
-    return opts
+    return config

@@ -1,0 +1,20 @@
+absl-py==0.9.0
+certifi==2020.6.20
+future==0.18.2
+grpcio==1.16.1
+Markdown==3.1.1
+mkl-fft==1.1.0
+mkl-random==1.1.1
+mkl-service==2.3.0
+numpy==1.18.5
+olefile==0.46
+Pillow==7.1.2
+protobuf==3.12.3
+pytorch-lightning @ file:///home/conda/feedstock_root/build_artifacts/pytorch-lightning_1593556096293/work
+PyYAML==5.3.1
+six==1.15.0
+tensorboard==2.0.0
+torch==1.5.1
+torchvision==0.6.0a0+35d732a
+tqdm @ file:///home/conda/feedstock_root/build_artifacts/tqdm_1593390011681/work
+Werkzeug==1.0.1

@@ -7,6 +7,7 @@ from torch import optim
 from torch.utils.data import DataLoader, random_split
 
 from src.data.base_dataset import BasicDatasetLT
+from src.utils.loss_functions import l2_outer_product
 
 
 class BaseModel(nn.Module):
@@ -47,7 +48,9 @@ class BaseModelLT(LightningModule):
         sizes = [opts['input_size'], *opts['hidden_sizes'], opts['output_size']]
         self.linears = nn.ModuleList([nn.Linear(in_size, out_size)
                                       for in_size, out_size in zip(sizes, sizes[1:])])
-        self.loss = lambda x,y: nn.MSELoss()(x,y) * np.prod(x.shape[1:])
+        loss_dict = {'mse': lambda x,y: nn.MSELoss()(x,y) * np.prod(x.shape[1:]),
+                     'l2_outer_product': l2_outer_product}
+        self.loss = loss_dict[opts['loss']]
 
     def forward(self, x):
         # REQUIRED

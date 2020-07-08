@@ -2,7 +2,6 @@ from unittest import TestCase
 
 import torch
 
-from src.utils.loss_functions import l2_outer_product
 from src.utils.complex_tensors import get_real_imag_parts, complex_mm, cat_real_imag_parts
 
 

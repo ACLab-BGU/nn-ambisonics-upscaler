@@ -1,0 +1,60 @@
+name: nnupscaler
+channels:
+  - pytorch
+  - conda-forge
+  - soumith
+  - defaults
+dependencies:
+  - absl-py=0.9.0=py37_0
+  - blas=1.0=mkl
+  - c-ares=1.15.0=h1de35cc_1001
+  - ca-certificates=2020.6.20=hecda079_0
+  - certifi=2020.6.20=py37hc8dfbb8_0
+  - freetype=2.10.2=ha233b18_0
+  - future=0.18.2=py37hc8dfbb8_1
+  - grpcio=1.16.1=py37h044775b_1
+  - intel-openmp=2019.4=233
+  - jpeg=9b=he5867d9_2
+  - libcxx=10.0.0=1
+  - libedit=3.1.20191231=haf1e3a3_0
+  - libffi=3.3=h0a44026_1
+  - libgfortran=3.0.1=h93005f0_2
+  - libpng=1.6.37=ha441bb4_0
+  - libprotobuf=3.12.3=hab81aa3_0
+  - libtiff=4.1.0=hcb84e12_1
+  - lz4-c=1.9.2=h0a44026_0
+  - markdown=3.1.1=py37_0
+  - mkl=2019.4=233
+  - mkl-service=2.3.0=py37hfbe908c_0
+  - mkl_fft=1.1.0=py37hc64f4ea_0
+  - mkl_random=1.1.1=py37h959d312_0
+  - ncurses=6.2=h0a44026_1
+  - ninja=1.9.0=py37h04f5b5a_0
+  - numpy=1.18.5=py37h1da2735_0
+  - numpy-base=1.18.5=py37h3304bdc_0
+  - olefile=0.46=py37_0
+  - openssl=1.1.1g=h0b31af3_0
+  - pillow=7.1.2=py37h4655f20_0
+  - pip=20.1.1=py37_1
+  - protobuf=3.12.3=py37hb1e8313_0
+  - python=3.7.7=hf48f09d_4
+  - python_abi=3.7=1_cp37m
+  - pytorch=1.5.1=py3.7_0
+  - pytorch-lightning=0.8.3=py_0
+  - pyyaml=5.3.1=py37h9bfed18_0
+  - readline=8.0=h1de35cc_0
+  - setuptools=47.3.1=py37_0
+  - six=1.15.0=py_0
+  - sqlite=3.32.3=hffcf06c_0
+  - tensorboard=2.0.0=pyhb38c66f_1
+  - tk=8.6.10=hb0a8c7a_0
+  - torchvision=0.6.1=py37_cpu
+  - tqdm=4.47.0=pyh9f0ad1d_0
+  - werkzeug=1.0.1=py_0
+  - wheel=0.34.2=py37_0
+  - xz=5.2.5=h1de35cc_0
+  - yaml=0.2.5=h0b31af3_0
+  - zlib=1.2.11=h1de35cc_3
+  - zstd=1.4.4=h1990bb4_3
+prefix: /opt/anaconda3/envs/nnupscaler
+

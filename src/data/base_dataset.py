@@ -144,6 +144,10 @@ class BasicDatasetLT(data.Dataset):
         # generate input data
         inputs = downgrade_scm(targets, self.sh_order, axis=(1, 2))
 
+        # normalize
+        inputs = inputs / inputs.norm()
+        targets = targets / targets.norm()
+
         # perform some transformation
         if self.transform:
             inputs = self.transform(inputs)

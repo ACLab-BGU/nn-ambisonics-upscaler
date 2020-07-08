@@ -66,6 +66,8 @@ class BaseModelLT(LightningModule):
     # ----- Data Loaders -----
 
     def setup(self, stage):
+        # OPTIONAL
+
         # train/val split
         assert np.sum(self.opts['train_val_split'])==1, 'invalid split arguments'
         dataset = BasicDatasetLT(self.opts['data_path'], train=True)

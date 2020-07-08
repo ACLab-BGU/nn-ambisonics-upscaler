@@ -92,7 +92,7 @@ class BasicDataset(data.Dataset):
 
 
 class BasicDatasetLT(data.Dataset):
-    def __init__(self, root, transform=None, preload=False, input_sh_order=3, dtype=torch.float32, train=True):
+    def __init__(self, root, transform=None, preload=True, input_sh_order=3, dtype=torch.float32, train=True):
 
         self.dtype = dtype
         self.transform = transform

@@ -7,25 +7,6 @@ from src.utils.complex_tensors import get_real_imag_parts, complex_mm
 
 
 class Test(TestCase):
-    def test_l2_outer_product(self):
-        x = torch.zeros((3, 2, 2, 1))
-        x[0, 0] = torch.tensor([[1], [0]])
-        x[0, 1] = torch.tensor([[0], [1]])
-        x[1, 0] = torch.tensor([[0], [3]])
-
-        target = torch.zeros((3, 2, 2, 2))
-        target[0, 0] = torch.tensor([[1, 0], [0, 1]])
-        target[0, 1] = torch.tensor([[0, -1], [1, 0]])
-        target[1, 0] = torch.tensor([[0, 0], [0, 9]])
-
-        loss = l2_outer_product(x, target)
-        self.assertEqual(loss, 0)
-
-        # make the last sample wrong
-        target[2] = torch.ones(2, 2, 2)
-        los_expected = 2 * 4 / 3
-        loss = l2_outer_product(x, target)
-        self.assertAlmostEqual(loss, los_expected)
 
     def test_get_real_imag_parts(self):
         x = torch.arange(3 * 2 * 4 * 5).reshape((3, 2, 4, 5))

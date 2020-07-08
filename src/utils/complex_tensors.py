@@ -1,0 +1,43 @@
+import torch
+
+
+def l2_sq_complex(x) -> torch.Tensor:
+    # x: ((N, M, L), (N, M, L))
+    return torch.sum(x[0] ** 2 + x[1] ** 2) / x[0].shape[0]
+
+
+def get_real_imag_parts(x):
+    # x: (_, 2, _, _)
+
+    x_real = x[:, 0]
+    x_imag = x[:, 1]
+
+    return x_real, x_imag
+
+
+def complex_mm(x, y):
+    # x - ((N, M, L), (N, M, L))
+    # y - ((N, L, K), (N, L, K))
+    # out - ((N, M, K), (N, M, K))
+
+    x_real, x_imag = x
+    y_real, y_imag = y
+
+    out_real = torch.matmul(x_real, y_real) - torch.matmul(x_imag, y_imag)
+    out_imag = torch.matmul(x_real, y_imag) + torch.matmul(x_imag, y_real)
+
+    return out_real, out_imag
+
+
+def complex_outer_product(x, y=None):
+    # x - ((N, Q, L), (N, Q, L))
+    # y - ((N, Q, L), (N, Q, L))
+    # out - ((N, Q, Q), (N, Q, Q))
+
+    if y is None:
+        y = x
+
+    x_real, x_imag = x
+    y_real, y_imag = y
+
+    return complex_mm((x_real, x_imag), (y_real.transpose(1, 2), -y_imag.transpose(1, 2)))

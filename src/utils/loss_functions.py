@@ -15,9 +15,3 @@ def l2_outer_product(x: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
     d_real = target_tuple[0] - outer_prod[0]
     d_imag = target_tuple[1] - outer_prod[1]
     return l2_sq_complex((d_real, d_imag))
-
-# def cat_real_imag_parts(x_real, x_imag):
-#     # x_real, x_imag - (N, M, L)
-#     # out - (N, 2, M, L)
-#
-#     return torch.cat(x_real, x_imag)

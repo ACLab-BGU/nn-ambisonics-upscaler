@@ -3,7 +3,7 @@ from unittest import TestCase
 import torch
 
 from src.utils.loss_functions import l2_outer_product
-from src.utils.complex_tensors import get_real_imag_parts, complex_mm
+from src.utils.complex_tensors import get_real_imag_parts, complex_mm, cat_real_imag_parts
 
 
 class Test(TestCase):
@@ -13,6 +13,13 @@ class Test(TestCase):
         x_real, x_imag = get_real_imag_parts(x)
         self.assertTrue(x_real.shape == torch.Size((3, 4, 5)))
         self.assertTrue(x_imag.shape == torch.Size((3, 4, 5)))
+
+    def test_cat_real_imag_parts(self):
+        x = torch.arange(3 * 2 * 4 * 5).reshape((3, 2, 4, 5))
+        x_real, x_imag = get_real_imag_parts(x)
+        x_rec = cat_real_imag_parts(x_real, x_imag)
+        self.assertTrue(x.shape == x_rec.shape)
+        self.assertTrue(torch.equal(x,x_rec))
 
     def test_complex_mm(self):
         x_real = torch.tensor([[[1, 0],

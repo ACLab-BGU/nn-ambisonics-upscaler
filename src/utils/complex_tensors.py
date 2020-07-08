@@ -14,6 +14,12 @@ def get_real_imag_parts(x):
 
     return x_real, x_imag
 
+def cat_real_imag_parts(x_real, x_imag):
+    # x_real, x_imag - (N, M, L)
+    # out - (N, 2, M, L)
+
+    shape_vec = (x_real.shape[0],1,*x_real.shape[1:])
+    return torch.cat((x_real.view(shape_vec),x_imag.view(shape_vec)),dim=1)
 
 def complex_mm(x, y):
     # x - ((N, M, L), (N, M, L))

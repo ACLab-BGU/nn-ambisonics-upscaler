@@ -47,7 +47,7 @@ class BaseModelLT(LightningModule):
         sizes = [opts['input_size'], *opts['hidden_sizes'], opts['output_size']]
         self.linears = nn.ModuleList([nn.Linear(in_size, out_size)
                                       for in_size, out_size in zip(sizes, sizes[1:])])
-        self.loss = nn.MSELoss()
+        self.loss = lambda x,y: nn.MSELoss()(x,y) * np.prod(x.shape[1:])
 
     def forward(self, x):
         # REQUIRED

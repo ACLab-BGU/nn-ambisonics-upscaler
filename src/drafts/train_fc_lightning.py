@@ -13,17 +13,18 @@ config = {
     "logs_path":  os.path.abspath('../../experiments'),
     "model_name": 'fc_2hidden',
     # ---network structure---
-    "input_size": 512, # TODO: fix hardcoding
-    "output_size": 4802, # TODO: fix hardcoding
-    "output_shape": [2,49,49], # TODO: fix hardcoding
-    "hidden_layers": 3,
-    "hidden_sizes": [1900,2500,3200],
+    "input_size": 2 * 16**2, # TODO: fix hardcoding
+    "output_size": 2 * 49, # TODO: fix hardcoding
+    "output_shape": [2,49,1], # TODO: fix hardcoding
+    "hidden_layers": 1,
+    "hidden_sizes": [200],
+    "loss": 'l2_outer_product', # 'l2_outer_product', 'mse'
     # ---data---
     # "dtype": torch.float32, # TODO: implement (does errors in saving hyperparameters)
     "transform": None,
     "batch_size": 3,
     "num_workers": 6,
-    "train_val_split": [0.9,0.1],
+    "train_val_split": [0.7,0.3],
     # ---optimization---
     "lr": 3e-4,
     "max_epochs": 1000,

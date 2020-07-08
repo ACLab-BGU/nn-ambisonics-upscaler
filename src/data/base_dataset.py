@@ -105,7 +105,7 @@ class BasicDatasetLT(data.Dataset):
         self.filenames = glob.glob(os.path.join(root, '*.bin'))  # get list of all bin files in the root folder
         assert len(self.filenames) > 0, 'data folder is empty'
         self.len = len(self.filenames)
-        self.frequencies = load_free_field_frequencies()  # frequencies of each SCM in the dataset
+        # self.frequencies = load_free_field_frequencies()  # frequencies of each SCM in the dataset
 
         if preload:
             self._preload()

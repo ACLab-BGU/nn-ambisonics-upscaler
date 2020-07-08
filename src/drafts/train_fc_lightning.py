@@ -1,14 +1,16 @@
+import os
+
 from pytorch_lightning import Trainer
 from pytorch_lightning.loggers import TensorBoardLogger
 
 from src.models.fc_model import BaseModelLT
 from src.options import prepare_opts
 
-default_config_path = "/Users/ranweisman/PycharmProjects/nn-ambisonics-upscaler/src/options/fc_default_config.yaml"
+default_config_path = os.path.abspath("../options/fc_default_config.yaml")
 config = {
     # ---folders---
-    "data_path": '/Users/ranweisman/Google Drive/My Drive/My Documents/MATLAB/Research/nn-ambisonics-upscaler/raw/free-field',
-    "logs_path": '/Users/ranweisman/PycharmProjects/nn-ambisonics-upscaler/experiments',
+    "data_path":  os.path.abspath('../../data/raw/free-field'),
+    "logs_path":  os.path.abspath('../../experiments'),
     "model_name": 'fc_2hidden',
     # ---network structure---
     "input_size": 512, # TODO: fix hardcoding
@@ -19,7 +21,7 @@ config = {
     # ---data---
     # "dtype": torch.float32, # TODO: implement (does errors in saving hyperparameters)
     "transform": None,
-    "batch_size": 30,
+    "batch_size": 3,
     "num_workers": 6,
     "train_val_split": [0.9,0.1],
     # ---optimization---

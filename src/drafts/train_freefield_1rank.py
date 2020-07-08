@@ -11,20 +11,19 @@ config = {
     # ---folders---
     "data_path":  os.path.abspath('../../data/raw/free-field'),
     "logs_path":  os.path.abspath('../../experiments'),
-    "model_name": 'fc_2hidden',
+    "model_name": 'fc1rank_freefield',
     # ---network structure---
-    "input_size": 2 * 16**2, # TODO: fix hardcoding
-    "output_size": 2 * 49, # TODO: fix hardcoding
-    "output_shape": [2,49,1], # TODO: fix hardcoding
+    "rank": 1, # None -> output is full matrix, Int -> output is low rank matrix transformed into full matrix
     "hidden_layers": 1,
-    "hidden_sizes": [200],
-    "loss": 'l2_outer_product', # 'l2_outer_product', 'mse'
+    "hidden_sizes": 200,
+    "loss": 'mse', # 'l2_outer_product', 'mse'
     # ---data---
     # "dtype": torch.float32, # TODO: implement (does errors in saving hyperparameters)
     "transform": None,
-    "batch_size": 30,
+    "batch_size": 5,
     "num_workers": 6,
     "train_val_split": [0.9,0.1],
+    "preload_data": True,
     # ---optimization---
     "lr": 3e-4,
     "max_epochs": 1000,

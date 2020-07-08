@@ -13,7 +13,7 @@ class Test(TestCase):
         x[1, 0] = torch.tensor([[0], [3]])
 
         target = torch.zeros((3, 2, 2, 2))
-        target[0, 0] = torch.tensor([[1,  0], [0, 1]])
+        target[0, 0] = torch.tensor([[1, 0], [0, 1]])
         target[0, 1] = torch.tensor([[0, -1], [1, 0]])
         target[1, 0] = torch.tensor([[0, 0], [0, 9]])
 
@@ -21,8 +21,8 @@ class Test(TestCase):
         self.assertEqual(loss, 0)
 
         # make the last sample wrong
-        target[2] = torch.ones(2,2,2)
-        los_expected = 2*4/3
+        target[2] = torch.ones(2, 2, 2)
+        los_expected = 2 * 4 / 3
         loss = l2_outer_product(x, target)
         self.assertAlmostEqual(loss, los_expected)
 
@@ -31,7 +31,6 @@ class Test(TestCase):
         x_real, x_imag = get_real_imag_parts(x)
         self.assertTrue(x_real.shape == torch.Size((3, 4, 5)))
         self.assertTrue(x_imag.shape == torch.Size((3, 4, 5)))
-
 
     def test_complex_mm(self):
         x_real = torch.tensor([[[1, 0],
@@ -61,4 +60,3 @@ class Test(TestCase):
         out_real_test, out_imag_test = complex_mm((x_real, x_imag), (y_real, y_imag))
         self.assertTrue(torch.equal(out_real_test, out_real))
         self.assertTrue(torch.equal(out_imag_test, out_imag))
-

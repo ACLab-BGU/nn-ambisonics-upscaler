@@ -7,7 +7,7 @@ from torch import optim
 from torch.utils.data import DataLoader, random_split
 
 from src.data.base_dataset import BasicDatasetLT
-from src.utils.loss_functions import l2_outer_product
+from src.utils.complex_tensors import get_real_imag_parts, complex_outer_product, cat_real_imag_parts
 
 
 class BaseModel(nn.Module):
@@ -39,18 +39,34 @@ class BaseModelLT(LightningModule):
         # save options
         self.opts = opts
 
+        # get input and output sizes
+        self._get_input_output_sizes()
+
         # save hyperparameters for logging
         self.save_hyperparameters('opts')
 
         # define network parameters
         if np.isscalar(opts['hidden_sizes']):
             opts['hidden_sizes'] = [opts['hidden_sizes']] * opts['hidden_layers']
-        sizes = [opts['input_size'], *opts['hidden_sizes'], opts['output_size']]
+        sizes = [opts['input_size'], *opts['hidden_sizes'], opts['last_layer_size']]
         self.linears = nn.ModuleList([nn.Linear(in_size, out_size)
                                       for in_size, out_size in zip(sizes, sizes[1:])])
         loss_dict = {'mse': lambda x,y: nn.MSELoss()(x,y) * np.prod(x.shape[1:]),
                      'l2_outer_product': l2_outer_product}
         self.loss = loss_dict[opts['loss']]
+
+
+    def _get_input_output_sizes(self):
+        # automatically get the input and output sizes
+        dataset = BasicDatasetLT(self.opts['data_path'], train=True, preload=False)
+        input,target = next(iter(dataset))
+        self.opts['input_size'] = np.prod(input.shape)
+        self.opts['output_shape'] = target.shape
+        if self.opts['rank'] is None:
+            self.opts['last_layer_size'] = np.prod(self.opts['output_shape'])
+        else:
+            self.opts['last_layer_size'] = np.prod((2,self.opts['output_shape'][-1],self.opts['rank']))
+
 
     def forward(self, x):
         # REQUIRED
@@ -59,7 +75,13 @@ class BaseModelLT(LightningModule):
             x = layer(x)
             if layer != self.linears[-1]:
                 x = F.relu(x)
-        x = x.view([x.shape[0], *self.opts['output_shape']])
+
+        # split between full-matrix output OR low-rank output transformed to full matrix
+        if self.opts['rank'] is None:
+            x = x.view((x.shape[0], *self.opts['output_shape']))
+        else:
+            x = x.view((x.shape[0],2,self.opts['output_shape'][-1],self.opts['rank']))
+            x = cat_real_imag_parts(*complex_outer_product(get_real_imag_parts(x))) # TODO: wrap 3 functions together, for simpler syntax for outer-product
         return x
 
     def configure_optimizers(self):
@@ -73,7 +95,7 @@ class BaseModelLT(LightningModule):
 
         # train/val split
         assert np.sum(self.opts['train_val_split'])==1, 'invalid split arguments'
-        dataset = BasicDatasetLT(self.opts['data_path'], train=True)
+        dataset = BasicDatasetLT(self.opts['data_path'], train=True, preload=self.opts['preload_data'])
         train_size = round(self.opts['train_val_split'][0] * len(dataset))
         val_size = len(dataset) - train_size
         self.dataset_train, self.dataset_val = random_split(dataset, [train_size, val_size])

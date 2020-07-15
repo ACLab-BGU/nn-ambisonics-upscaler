@@ -114,8 +114,8 @@ if size(h_array,1)==1
     p = s*h_array;
     anm_target  = s*h_target;
 else
-    p = fftfilt(h_array, s, 2^15); % 2^15 seems to be the fastest on my mac
-    anm_target = fftfilt(h_target, s, 2^15); % 2^15 seems to be the fastest on my mac
+    p = fftfilt(h_array, s); % 2^15 seems to be the fastest on my mac
+    anm_target = fftfilt(h_target, s); % 2^15 seems to be the fastest on my mac
 end
 p = p./std(p, [], "all");
 anm_target = anm_target./std(anm_target(:,1));

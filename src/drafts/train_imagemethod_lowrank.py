@@ -11,17 +11,17 @@ config = {
     # ---folders---
     "data_path":  os.path.abspath('../../data/raw/image-method'),
     "logs_path":  os.path.abspath('../../experiments'),
-    "model_name": 'fc_5rank_imagemethod',
+    "model_name": 'fc_30rank_imagemethod',
     # ---network structure---
-    "rank": 5, # None -> output is full matrix, Int -> output is low rank matrix transformed into full matrix
-    "hidden_layers": 2,
-    "hidden_sizes": [1000,2000],
+    "rank": 25, # None -> output is full matrix, Int -> output is low rank matrix transformed into full matrix
+    "hidden_layers": 3,
+    "hidden_sizes": [1000,1500,2000],
     "loss": 'mse', # 'mse'
     # ---data---
     # "dtype": torch.float32, # TODO: implement (does errors in saving hyperparameters)
     "transform": None,
-    "batch_size": 5,
-    "num_workers": 6,
+    "batch_size": 25,
+    "num_workers": 10,
     "train_val_split": [0.9,0.1],
     "preload_data": True,
     # ---optimization---

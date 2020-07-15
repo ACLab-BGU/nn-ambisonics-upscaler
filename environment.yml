@@ -1,0 +1,11 @@
+name: nnupscaler
+channels:
+  - soumith
+  - defaults
+dependencies:
+  - python=3.7
+  - tensorboard
+  - pytorch
+  - torchvision
+  - pytorch-lightning
+prefix: /opt/anaconda3/envs/nnupscaler

@@ -69,6 +69,15 @@ class BaseModelLT(LightningModule):
 
     def forward(self, x):
         # REQUIRED
+        if self.opts['residual_only']:
+            pad_size = self.opts['output_shape'][-1] - x.shape[-1]
+            x = F.pad(x,(0,pad_size,0,pad_size))
+            raise NotImplementedError()
+            return x
+
+        if self.opts['residual_flag']:
+            x_orig = x.clone()
+
         x = torch.flatten(x, 1)
         for layer in self.linears:
             x = layer(x)
@@ -81,7 +90,12 @@ class BaseModelLT(LightningModule):
         else:
             x = x.view((x.shape[0],2,self.opts['output_shape'][-1],self.opts['rank']))
             x = cat_real_imag_parts(*complex_outer_product(get_real_imag_parts(x))) # TODO: wrap 3 functions together, for simpler syntax for outer-product
+
+        if self.opts['residual_flag']:
+            x[:, :, :x_orig.shape[-2], :x_orig.shape[-1]] += x_orig
+
         return x
+
 
     def configure_optimizers(self):
         # REQUIRED

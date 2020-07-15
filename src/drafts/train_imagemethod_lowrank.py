@@ -13,9 +13,11 @@ config = {
     "logs_path":  os.path.abspath('../../experiments'),
     "model_name": 'fc_30rank_imagemethod',
     # ---network structure---
-    "rank": 25, # None -> output is full matrix, Int -> output is low rank matrix transformed into full matrix
+    "rank": None, # None -> output is full matrix, Int -> output is low rank matrix transformed into full matrix
     "hidden_layers": 3,
     "hidden_sizes": [1000,1500,2000],
+    "residual_flag": True,
+    "residual_only": False,
     "loss": 'mse', # 'mse'
     # ---data---
     # "dtype": torch.float32, # TODO: implement (does errors in saving hyperparameters)

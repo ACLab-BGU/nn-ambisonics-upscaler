@@ -29,7 +29,7 @@ config = {
     # ---optimization---
     "lr": 3e-4,
     "max_epochs": 1000,
-    "gpus": 0
+    "gpus": 1
 }
 
 

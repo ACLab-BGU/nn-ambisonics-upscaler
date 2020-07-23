@@ -11,7 +11,7 @@ config = {
     # ---folders---
     "data_path":  os.path.abspath('../../data/raw/image-method'),
     "logs_path":  os.path.abspath('../../experiments'),
-    "model_name": 'fc_imagemethod',
+    "experiment_name": 'fc_imagemethod',
     # ---network structure---
     "rank": None, # None -> output is full matrix, Int -> output is low rank matrix transformed into full matrix
     "hidden_layers": 2,
@@ -50,7 +50,7 @@ if __name__ == '__main__':
     # opts = dict(prepare_opts(default_config_path,config))
     opts = dict(prepare_opts(config))
     model = BaseModelLT(opts)
-    logger = TensorBoardLogger(opts['logs_path'],name=opts['model_name'])
+    logger = TensorBoardLogger(opts['logs_path'],name=opts['experiment_name'])
     trainer = Trainer(weights_summary='full', max_epochs=opts['max_epochs'], gpus=opts['gpus'],
                       default_root_dir=opts['logs_path'], logger=logger)
     trainer.fit(model)

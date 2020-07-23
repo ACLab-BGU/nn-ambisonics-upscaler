@@ -1,13 +1,9 @@
 # ---folders---
-data_path: "/Users/ranweisman/Google Drive/My Drive/My Documents/MATLAB/Research/nn-ambisonics-upscaler/raw/free-field"
+data_path: "/Users/ranweisman/PycharmProjects/nn-ambisonics-upscaler/data/raw/image-method"
 logs_path: "/Users/ranweisman/PycharmProjects/nn-ambisonics-upscaler/experiments"
+experiment_name: "some_experiment_name"
 # ---network structure---
-input_size: 512
-output_size: 4802
-output_shape:
-- 2
-- 49
-- 49
+model_name: "fc"
 hidden_layers: 3
 hidden_sizes:
 - 1600

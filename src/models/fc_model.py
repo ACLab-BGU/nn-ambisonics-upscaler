@@ -1,3 +1,5 @@
+import os
+
 import numpy as np
 import torch
 import torch.nn as nn
@@ -7,27 +9,34 @@ from torch import optim
 from torch.utils.data import DataLoader, random_split
 
 from src.data.base_dataset import BasicDatasetLT
+from src.utils import get_data_dir, get_experiments_dir
 from src.utils.complex_tensors import get_real_imag_parts, complex_outer_product, cat_real_imag_parts
 
-
-class BaseModel(nn.Module):
-    def __init__(self, input_size, output_size, hidden_layers=3, hidden_sizes=200):
-        super(BaseModel, self).__init__()
-        if np.isscalar(hidden_sizes):
-            hidden_sizes = [hidden_sizes] * hidden_layers
-        sizes = [input_size, *hidden_sizes, output_size]
-        self.linears = nn.ModuleList([nn.Linear(in_size, out_size)
-                                      for in_size, out_size in zip(sizes, sizes[1:])])
-
-    def forward(self, x):
-
-        x = torch.flatten(x, 1)
-        for layer in self.linears:
-            x = layer(x)
-            if layer != self.linears[-1]:
-                x = F.relu(x)
-
-        return x
+default_opts = {
+    # ---folders---
+    "data_path":  os.path.join(get_data_dir(),'raw','image-method'),
+    "logs_path":  get_experiments_dir(),
+    "experiment_name": 'fc_25rank_imagemethod',
+    # ---network structure---
+    "model_name": 'fc',
+    "rank": 25, # None -> output is full matrix, Int -> output is low rank matrix transformed into full matrix
+    "hidden_layers": 3,
+    "hidden_sizes": [1000,1500,2000],
+    "residual_flag": True,
+    "residual_only": False,
+    "loss": 'mse', # 'mse'
+    # ---data---
+    # "dtype": torch.float32, # TODO: implement (does errors in saving hyperparameters)
+    "transform": None,
+    "batch_size": 25,
+    "num_workers": 10,
+    "train_val_split": [0.9,0.1],
+    "preload_data": True,
+    # ---optimization---
+    "lr": 3e-4,
+    "max_epochs": 1000,
+    "gpus": -1
+}
 
 
 # noinspection PyAttributeOutsideInit,PyAttributeOutsideInit

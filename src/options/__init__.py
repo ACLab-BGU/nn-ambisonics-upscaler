@@ -1,3 +1,4 @@
+import itertools
 import json
 import os
 import sys
@@ -24,10 +25,11 @@ def read_json(path):
     with open(path, "r") as f:
         return json.load(f)
 
+
 def read_yaml(path):
     assert os.path.exists(path)
     with open(path, 'r') as stream:
-         return yaml.safe_load(stream)
+        return yaml.safe_load(stream)
 
 
 def update_opts_with_defaults(opts, defaults):
@@ -72,11 +74,12 @@ def prepare_opts(base_opts, opts=None, with_flags=True, print_flag=False):
 
     return dict(opts)
 
-def validate_opts(opts,print_flag=True):
+
+def validate_opts(opts, print_flag=True):
     ''' validate that the given options are OK, and perform some automatic fixes if needed'''
 
     # GPU
-    if ~torch.cuda.is_available() and opts['gpus']!=0:
+    if ~torch.cuda.is_available() and opts['gpus'] != 0:
         warnings.warn('GPU is not available, using CPU instead')
         opts['gpus'] = 0
 
@@ -86,13 +89,23 @@ def validate_opts(opts,print_flag=True):
 
     return opts
 
+
 def get_default_opts(opts):
     ''' find the default options of the given model'''
     if type(opts) == str:
         opts = EasyDict(read_yaml(opts))
-    _,default_opts = find_model_using_name(opts['model_name'])
+    _, default_opts = find_model_using_name(opts['model_name'])
     return default_opts
+
 
 def print_opts(opts):
     print("Configuration Parameters: ")
     print("\n".join([k + ": " + str(v) for k, v in opts.items()]))
+
+
+def get_opts_combs(opts):
+    ''' get a list of combinations for different options'''
+    keys = opts.keys()
+    values = (opts[key] for key in keys)
+    combinations = [dict(zip(keys, combination)) for combination in itertools.product(*values)]
+    return combinations

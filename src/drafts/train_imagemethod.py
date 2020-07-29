@@ -6,7 +6,7 @@ from pytorch_lightning.loggers import TensorBoardLogger
 from src.models.fc_model import BaseModelLT
 from src.options import prepare_opts
 
-default_config_path = os.path.abspath("../options/fc_default_config.yaml")
+default_config_path = os.path.abspath("../options/fc_custom_config.yaml")
 config = {
     # ---folders---
     "data_path":  os.path.abspath('../../data/raw/image-method'),

@@ -45,46 +45,44 @@ class BaseModelLT(LightningModule):
         # REQUIRED
         super().__init__()
 
-        # save options
-        self.opts = opts
+        # save hyperparameters
+        self.save_hyperparameters(opts)
 
         # get input and output sizes
         self._get_input_output_sizes()
 
-        # save hyperparameters for logging
-        self.save_hyperparameters('opts')
-
         # define network parameters
-        if np.isscalar(opts['hidden_sizes']):
-            opts['hidden_sizes'] = [opts['hidden_sizes']] * opts['hidden_layers']
-        sizes = [opts['input_size'], *opts['hidden_sizes'], opts['last_layer_size']]
+        if np.isscalar(self.hparams.hidden_sizes):
+            self.hparams.hidden_sizes = [self.hparams.hidden_sizes] * self.hparams.hidden_layers
+        sizes = [self.hparams.input_size, *self.hparams.hidden_sizes, self.hparams.last_layer_size]
         self.linears = nn.ModuleList([nn.Linear(in_size, out_size)
                                       for in_size, out_size in zip(sizes, sizes[1:])])
         loss_dict = {'mse': lambda x,y: nn.MSELoss()(x,y) * np.prod(x.shape[1:])}
-        self.loss = loss_dict[opts['loss']]
+        self.loss = loss_dict[self.hparams.loss]
 
 
     def _get_input_output_sizes(self):
         # automatically get the input and output sizes
-        dataset = BasicDatasetLT(self.opts['data_path'], train=True, preload=False)
+        # (values are casted into normal ints, to beautify the yaml format)
+        dataset = BasicDatasetLT(self.hparams.data_path, train=True, preload=False)
         input,target = next(iter(dataset))
-        self.opts['input_size'] = np.prod(input.shape)
-        self.opts['output_shape'] = target.shape
-        if self.opts['rank'] is None:
-            self.opts['last_layer_size'] = np.prod(self.opts['output_shape'])
+        self.hparams.input_size = np.prod(input.shape).tolist()
+        self.hparams.output_shape = list(target.shape)
+        if self.hparams.rank is None:
+            self.hparams.last_layer_size = np.prod(self.hparams.output_shape).tolist()
         else:
-            self.opts['last_layer_size'] = np.prod((2,self.opts['output_shape'][-1],self.opts['rank']))
+            self.hparams.last_layer_size = np.prod((2,self.hparams.output_shape[-1],self.hparams.rank)).tolist()
 
 
     def forward(self, x):
         # REQUIRED
-        if self.opts['residual_only']:
-            pad_size = self.opts['output_shape'][-1] - x.shape[-1]
+        if self.hparams.residual_only:
+            pad_size = self.hparams.output_shape[-1] - x.shape[-1]
             x = F.pad(x,(0,pad_size,0,pad_size))
             raise NotImplementedError()
             return x
 
-        if self.opts['residual_flag']:
+        if self.hparams.residual_flag:
             x_orig = x.clone()
 
         x = torch.flatten(x, 1)
@@ -94,13 +92,13 @@ class BaseModelLT(LightningModule):
                 x = F.relu(x)
 
         # split between full-matrix output OR low-rank output transformed to full matrix
-        if self.opts['rank'] is None:
-            x = x.view((x.shape[0], *self.opts['output_shape']))
+        if self.hparams.rank is None:
+            x = x.view((x.shape[0], *self.hparams.output_shape))
         else:
-            x = x.view((x.shape[0],2,self.opts['output_shape'][-1],self.opts['rank']))
+            x = x.view((x.shape[0],2,self.hparams.output_shape[-1],self.hparams.rank))
             x = cat_real_imag_parts(*complex_outer_product(get_real_imag_parts(x))) # TODO: wrap 3 functions together, for simpler syntax for outer-product
 
-        if self.opts['residual_flag']:
+        if self.hparams.residual_flag:
             x[:, :, :x_orig.shape[-2], :x_orig.shape[-1]] += x_orig
 
         return x
@@ -108,7 +106,7 @@ class BaseModelLT(LightningModule):
 
     def configure_optimizers(self):
         # REQUIRED
-        return optim.Adam(self.parameters(), lr=self.opts['lr'])
+        return optim.Adam(self.parameters(), lr=self.hparams.lr)
 
     # ----- Data Loaders -----
 
@@ -116,26 +114,26 @@ class BaseModelLT(LightningModule):
         # OPTIONAL
 
         # train/val split
-        assert np.sum(self.opts['train_val_split'])==1, 'invalid split arguments'
-        dataset = BasicDatasetLT(self.opts['data_path'], train=True, preload=self.opts['preload_data'])
-        train_size = round(self.opts['train_val_split'][0] * len(dataset))
+        assert np.sum(self.hparams.train_val_split)==1, 'invalid split arguments'
+        dataset = BasicDatasetLT(self.hparams.data_path, train=True, preload=self.hparams.preload_data)
+        train_size = round(self.hparams.train_val_split[0] * len(dataset))
         val_size = len(dataset) - train_size
         self.dataset_train, self.dataset_val = random_split(dataset, [train_size, val_size])
 
     def train_dataloader(self):
         # REQUIRED
-        loader = DataLoader(self.dataset_train, batch_size=self.opts['batch_size'], num_workers=self.opts['num_workers'])
+        loader = DataLoader(self.dataset_train, batch_size=self.hparams.batch_size, num_workers=self.hparams.num_workers)
         return loader
 
     def val_dataloader(self):
         # OPTIONAL
-        loader = DataLoader(self.dataset_val, batch_size=self.opts['batch_size'], num_workers=self.opts['num_workers'])
+        loader = DataLoader(self.dataset_val, batch_size=self.hparams.batch_size, num_workers=self.hparams.num_workers)
         return loader
 
     def test_dataloader(self):
         # OPTIONAL
-        dataset = BasicDatasetLT(self.opts['data_path'], train=False)
-        loader = DataLoader(dataset, batch_size=self.opts['batch_size'], num_workers=self.opts['num_workers'])
+        dataset = BasicDatasetLT(self.hparams.data_path, train=False)
+        loader = DataLoader(dataset, batch_size=self.hparams.batch_size, num_workers=self.hparams.num_workers)
         return loader
 
     # ----- Training Loop -----

@@ -25,8 +25,13 @@ def prepare_logger(opts):
 
 def prepare_trainer(opts, logger=None):
     ''' prepare the trainer using the given options '''
-    trainer = Trainer(weights_summary='full', max_epochs=opts['max_epochs'], gpus=opts['gpus'],
-                      default_root_dir=opts['logs_path'], logger=logger)
+    optional_arguments = ['max_epochs','gpus','fast_dev_run','overfit_batches','limit_train_batches'
+                 'progress_bar_refresh_rate','auto_lr_find','check_val_every_n_epoch','val_check_interval',
+                 'log_save_interval','row_log_interval','resume_from_checkpoint']
+    trainer_args = dict((key, opts[key]) for key in optional_arguments if key in opts)
+
+    trainer = Trainer(weights_summary='full', logger=logger, **trainer_args)
+
     return trainer
 
 

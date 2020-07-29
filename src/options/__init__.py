@@ -55,12 +55,11 @@ def update_opts_with_flags(opts):
 
 def prepare_opts(base_opts, opts=None, with_flags=True, print_flag=False):
     # open and parse in case of files
-    if type(base_opts) == str:
-        base_opts = EasyDict(read_yaml(base_opts))
-    if type(opts) == str:
-        opts = EasyDict(read_yaml(opts))
+    base_opts = read_opts(base_opts)
+    opts = read_opts(opts)
+
     # in case of no config input
-    elif opts is None:
+    if opts is None:
         opts = base_opts
 
     # update config according to defaults and command-line flags
@@ -92,10 +91,20 @@ def validate_opts(opts, print_flag=True):
 
 def get_default_opts(opts):
     ''' find the default options of the given model'''
-    if type(opts) == str:
-        opts = EasyDict(read_yaml(opts))
+    opts = read_opts(opts)
     _, default_opts = find_model_using_name(opts['model_name'])
     return default_opts
+
+
+def read_opts(opts):
+    if type(opts) == str:
+        if opts.endswith('yaml'):
+            opts = EasyDict(read_yaml(opts))
+        else:
+            model_name = opts
+            opts = {'model_name': model_name}
+
+    return opts
 
 
 def print_opts(opts):

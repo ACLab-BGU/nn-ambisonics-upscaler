@@ -24,6 +24,7 @@ for i=start_index:num_of_files
     file_path(i) = fullfile(folder_path, sprintf("%08d.bin", i)); 
     fid = fopen(file_path(i), 'w');
     fwrite(fid, v(:), 'double');
+    fclose(fid);
     wbar(i,num_of_files,wb);
 end
 

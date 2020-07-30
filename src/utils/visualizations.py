@@ -74,8 +74,8 @@ def compare_covs(input, output, expected) -> plt.Figure:
 
     fig, axes = plt.subplots(2, 2)
     for ax, mat, title in zip(axes.flat,
-                              [input, output, expected, output[:Q_in, :Q_in]],
-                              ["input", "output", "expected", "output truncated"]):
+                              [input, output, expected, output[:Q_in, :Q_in]-input],
+                              ["input", "output", "expected", "output truncated - input"]):
         covariance_matrix(mat, ax)
         ax.set_title(title)
 

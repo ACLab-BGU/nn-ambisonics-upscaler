@@ -77,24 +77,19 @@ def compare_covs(input, output, expected, normalize_diff=False) -> plt.Figure:
     if normalize_diff:
         mats[3] /= input
 
-    vmin = np.inf
-    vmax = 0
-    for i, mat in enumerate(mats):
-        if i==len(mats)-1 and normalize_diff:
-            break
-        vmin = np.minimum(np.min(np.abs(mat)), vmin)
-        vmax = np.maximum(np.max(np.abs(mat)), vmax)
-        
     fig, axes = plt.subplots(2, 2)
+    im = []
     for i, (ax, mat, title) in enumerate(zip(axes.flat,
                               mats,
                               ["input", "output", "expected", "output truncated - input"])):
-        im = covariance_matrix(mat, ax)
+        im.append(covariance_matrix(mat, ax))
         ax.set_title(title)
-        if i<len(mats)-1 or not normalize_diff:
-            im.set_clim(vmin, vmax)
 
-    fig.show()
+    if normalize_diff:
+        common_clim(im[:-1])
+    else:
+        common_clim(im)
+
     return fig
 
 
@@ -103,17 +98,31 @@ def compare_power_maps(input, output, expected) -> plt.Figure:
     Q_out = output.shape[0]
 
     fig, axes = plt.subplots(2, 3)
+    im = []
     for ax, mat, title in zip(axes.flat,
                               [input, output, expected, output[:Q_in, :Q_in]],
                               ["input", "output", "expected", "output truncated"]):
-        power_map(mat, ax=ax)
+        im.append(power_map(mat, ax=ax))
         ax.set_title(title)
+    common_clim([im[0], im[3]])
+    common_clim([im[1], im[2]])
 
+    im = []
     for ax, mat, title in zip(axes.flatten()[4:],
                               [output - expected, output[:Q_in, :Q_in]-input],
-                              ["output-input", "expected truncated - input"]):
-        power_map(mat, ax=ax, db=False)
+                              ["output-expected", "output truncated - input"]):
+        im.append(power_map(mat, ax=ax, db=False))
         ax.set_title(title)
 
     fig.show()
     return fig
+
+
+def common_clim(images):
+    vmin = []
+    vmax = []
+    for image in images:
+        vmin.append(image.get_clim()[0])
+        vmax.append(image.get_clim()[1])
+    for image in images:
+        image.set_clim(min(vmin), max(vmax))

@@ -41,3 +41,16 @@ def sample(n, m, th, ph):
 
 
 def Q2N(Q):
+    return (np.sqrt(Q)-1).astype(int).tolist()
+
+
+def power_map(cov, omega) -> np.ndarray:
+    Q, Q1 = cov.shape
+    assert Q == Q1
+    order = Q2N(Q)
+
+    Y = mat(order, omega.reshape((2, -1)))  # (XY, Q)
+    power = np.sum((Y @ cov) * Y.conj(), axis=1)
+
+    power = power.reshape(omega.shape[1:])
+    return np.real(power)

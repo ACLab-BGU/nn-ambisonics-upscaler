@@ -1,3 +1,4 @@
+import numpy as np
 import torch
 
 
@@ -47,3 +48,18 @@ def complex_outer_product(x, y=None):
     y_real, y_imag = y
 
     return complex_mm((x_real, x_imag), (y_real.transpose(1, 2), -y_imag.transpose(1, 2)))
+
+
+def complextorch2numpy(x, dim=0):
+    # convert decoupled complex torch-tensor/numpy-array, to a full complex numpy array
+    # x - the decoupled tensor/array
+    # dim - the dimension of the real/imag parts, must be of size 2
+
+    assert x.shape[dim] == 2, "size of the imaginary dimensions must be 2!"
+    if type(x) == torch.Tensor:
+        x = x.numpy()
+
+    x = np.moveaxis(x, dim, 0)
+    x = x[0] + 1j * x[1]
+
+    return x

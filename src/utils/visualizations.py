@@ -70,23 +70,29 @@ def power_map(cov: np.ndarray, points=5000, db=True, dynamic_range_db: Union[flo
     return im
 
 
-def compare_covs(input, output, expected) -> plt.Figure:
+def compare_covs(input, output, expected, normalize_diff=False) -> plt.Figure:
     Q_in = input.shape[0]
     Q_out = output.shape[0]
     mats = [input, output, expected, output[:Q_in, :Q_in]-input]
+    if normalize_diff:
+        mats[3] /= input
+
     vmin = np.inf
     vmax = 0
-    for mat in mats:
+    for i, mat in enumerate(mats):
+        if i==len(mats)-1 and normalize_diff:
+            break
         vmin = np.minimum(np.min(np.abs(mat)), vmin)
         vmax = np.maximum(np.max(np.abs(mat)), vmax)
         
     fig, axes = plt.subplots(2, 2)
-    for ax, mat, title in zip(axes.flat,
+    for i, (ax, mat, title) in enumerate(zip(axes.flat,
                               mats,
-                              ["input", "output", "expected", "output truncated - input"]):
+                              ["input", "output", "expected", "output truncated - input"])):
         im = covariance_matrix(mat, ax)
-        im.set_clim(vmin, vmax)
         ax.set_title(title)
+        if i<len(mats)-1 or not normalize_diff:
+            im.set_clim(vmin, vmax)
 
     fig.show()
     return fig
@@ -111,16 +117,3 @@ def compare_power_maps(input, output, expected) -> plt.Figure:
 
     fig.show()
     return fig
-
-#
-# doa = np.array([[np.pi/3], [np.pi/2]])
-# anm = np.conj(sh.mat(6, doa, is_transposed=True))
-# cov = anm * anm.transpose().conj()
-# power_map(cov)
-#
-# cov_in = cov[:25, :25]
-# cov_out = np.eye(cov.shape[0])
-#
-# compare_covs(cov_in, cov_out, cov)
-# compare_power_maps(cov_in, cov_out, cov)
-# pass

@@ -73,12 +73,19 @@ def power_map(cov: np.ndarray, points=5000, db=True, dynamic_range_db: Union[flo
 def compare_covs(input, output, expected) -> plt.Figure:
     Q_in = input.shape[0]
     Q_out = output.shape[0]
-
+    mats = [input, output, expected, output[:Q_in, :Q_in]-input]
+    vmin = np.inf
+    vmax = 0
+    for mat in mats:
+        vmin = np.minimum(np.min(np.abs(mat)), vmin)
+        vmax = np.maximum(np.max(np.abs(mat)), vmax)
+        
     fig, axes = plt.subplots(2, 2)
     for ax, mat, title in zip(axes.flat,
-                              [input, output, expected, output[:Q_in, :Q_in]-input],
+                              mats,
                               ["input", "output", "expected", "output truncated - input"]):
-        covariance_matrix(mat, ax)
+        im = covariance_matrix(mat, ax)
+        im.set_clim(vmin, vmax)
         ax.set_title(title)
 
     fig.show()
@@ -106,14 +113,14 @@ def compare_power_maps(input, output, expected) -> plt.Figure:
     return fig
 
 #
-# doa = np.array([[np.pi/3], [np.pi/2]])
-# anm = np.conj(sh.mat(6, doa, is_transposed=True))
-# cov = anm * anm.transpose().conj()
-# power_map(cov)
-#
-# cov_in = cov[:25, :25]
-# cov_out = np.eye(cov.shape[0])
-#
-# compare_covs(cov_in, cov_out, cov)
-# compare_power_maps(cov_in, cov_out, cov)
-# pass
+doa = np.array([[np.pi/3], [np.pi/2]])
+anm = np.conj(sh.mat(6, doa, is_transposed=True))
+cov = anm * anm.transpose().conj()
+power_map(cov)
+
+cov_in = cov[:25, :25]
+cov_out = np.eye(cov.shape[0])
+
+compare_covs(cov_in, cov_out, cov)
+compare_power_maps(cov_in, cov_out, cov)
+pass

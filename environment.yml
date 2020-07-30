@@ -1,12 +1,58 @@
 name: nnupscaler
 channels:
-  - soumith
   - defaults
 dependencies:
-  - python=3.7
-  - tensorboard
-  - pytorch
-  - torchvision
-  - pytorch-lightning
-  - matplotlib~=3.2.2
-prefix: /opt/anaconda3/envs/nnupscaler
+  - pytorch-lightning==0.8.3=py_0
+  - libprotobuf==3.12.3=hab81aa3_0
+  - jpeg==9b=he5867d9_2
+  - pytorch==1.5.1=py3.7_0
+  - werkzeug==1.0.1=py_0
+  - python==3.7.7=hf48f09d_4
+  - torchvision==0.6.1=py37_cpu
+  - blas==1.0=mkl
+  - tensorboard==2.0.0=pyhb38c66f_1
+  - pip==20.1.1=py37_1
+  - sqlite==3.32.3=hffcf06c_0
+  - xz==5.2.5=h1de35cc_0
+  - setuptools==47.3.1=py37_0
+  - freetype==2.10.2=ha233b18_0
+  - libtiff==4.1.0=hcb84e12_1
+  - wheel==0.34.2=py37_0
+  - yaml==0.2.5=h0b31af3_0
+  - libpng==1.6.37=ha441bb4_0
+  - c-ares==1.15.0=h1de35cc_1001
+  - readline==8.0=h1de35cc_0
+  - python_abi==3.7=1_cp37m
+  - libffi==3.3=h0a44026_1
+  - zlib==1.2.11=h1de35cc_3
+  - openssl
+  - markdown==3.1.1=py37_0
+  - intel-openmp==2019.4=233
+  - ca-certificates
+  - mkl==2019.4=233
+  - protobuf==3.12.3=py37hb1e8313_0
+  - absl-py==0.9.0=py37_0
+  - libcxx==10.0.0=1
+  - pyyaml==5.3.1=py37h9bfed18_0
+  - numpy-base==1.18.5=py37h3304bdc_0
+  - tk==8.6.10=hb0a8c7a_0
+  - tqdm==4.47.0=pyh9f0ad1d_0
+  - libgfortran==3.0.1=h93005f0_2
+  - lz4-c==1.9.2=h0a44026_0
+  - mkl-service==2.3.0=py37hfbe908c_0
+  - ncurses==6.2=h0a44026_1
+  - pillow==7.1.2=py37h4655f20_0
+  - future==0.18.2=py37hc8dfbb8_1
+  - numpy==1.18.5=py37h1da2735_0
+  - six==1.15.0=py_0
+  - certifi
+  - mkl_fft==1.1.0=py37hc64f4ea_0
+  - zstd==1.4.4=h1990bb4_3
+  - grpcio==1.16.1=py37h044775b_1
+  - ninja==1.9.0=py37h04f5b5a_0
+  - mkl_random==1.1.1=py37h959d312_0
+  - libedit==3.1.20191231=haf1e3a3_0
+  - olefile==0.46=py37_0
+  - matplotlib
+  - scipy
+prefix: /Users/tomshlomo/opt/anaconda3/envs/nnupscaler

@@ -28,6 +28,14 @@ def add_sh_order_lines(ax: plt.Axes, order=None, args_dict=None, x_flag=True, y_
             ax.axhline(loc, color='red', **args_dict)
 
 
+def power_map(cov: np.ndarray, points=5000):
+    from src.utils.sphere.sampling_schemes import grid
+    from src.utils.sphere.sh import mat as shmat
+
+
+    omega = grid(points, output_type='all_combs_2d')
+    shmat(order, omega)
+
 # def sh_covariance_spatial_response(mat, num_of_points):
 
 

@@ -38,3 +38,6 @@ def mat(max_order, omega, is_transposed=False, is_complex=True) -> np.ndarray:
 def sample(n, m, th, ph):
     from scipy.special import sph_harm
     return sph_harm(m, n, ph, th)
+
+
+def Q2N(Q):

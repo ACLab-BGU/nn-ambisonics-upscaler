@@ -23,3 +23,4 @@ def grid(points, output_type='tuple_1d', phi_zero_center=True):
             return np.stack([th, ph])
         else:
             raise ValueError(f'illegal value for output_type: {output_type}')
+

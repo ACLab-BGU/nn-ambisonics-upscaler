@@ -1,11 +1,14 @@
 import numpy as np
 
 
-def grid(points, output_type='tuple_1d'):
+def grid(points, output_type='tuple_1d', phi_zero_center=True):
     th_points = (np.floor(np.sqrt(points / 2))).astype(int)
     ph_points = (th_points * 2).astype(int)
     th = np.linspace(0, np.pi, th_points, endpoint=False)
-    ph = np.linspace(0, 2 * np.pi, ph_points, endpoint=False)
+    if phi_zero_center:
+        ph = np.linspace(-np.pi, np.pi, ph_points, endpoint=False)
+    else:
+        ph = np.linspace(0, 2 * np.pi, ph_points, endpoint=False)
 
     if output_type == 'tuple_1d':
         return th, ph

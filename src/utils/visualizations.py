@@ -1,4 +1,6 @@
 # %%
+from typing import Union
+
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -14,7 +16,7 @@ def covariance_matrix(mat, ax=None, add_order_lines=True):
     im = ax.imshow(np.abs(mat))
     if add_order_lines:
         add_sh_order_lines(ax)
-
+    ax.figure.colorbar(im, ax=ax)
     return im
 
 
@@ -36,7 +38,7 @@ def add_sh_order_lines(ax: plt.Axes, order=None, args_dict=None, x_flag=True, y_
             ax.axhline(loc, color='red', **args_dict)
 
 
-def power_map(cov: np.ndarray, points=5000, db=True, dynamic_range_db=50, ax: plt.Axes = None):
+def power_map(cov: np.ndarray, points=5000, db=True, dynamic_range_db: Union[float, None] = 50., ax: plt.Axes = None):
     from src.utils.sphere.sampling_schemes import grid
     from src.utils.sphere.sh import mat as shmat
 
@@ -46,13 +48,14 @@ def power_map(cov: np.ndarray, points=5000, db=True, dynamic_range_db=50, ax: pl
     if db:
         power = 10*np.log10(power)
 
-    vmax = np.max(power)
-    vmin_by_data = np.min(power)
-    if db:
+    if dynamic_range_db is not None and db:
+        vmax = np.max(power)
+        vmin_by_data = np.min(power)
         vmin_by_dynamic_range = vmax-dynamic_range_db
+        vmin = np.maximum(vmin_by_data, vmin_by_dynamic_range)
     else:
-        vmin_by_dynamic_range = vmax / (10. ** (dynamic_range_db/10.))
-    vmin = np.maximum(vmin_by_data, vmin_by_dynamic_range)
+        vmin = None
+        vmax = None
 
     if ax is None:
         fig = plt.figure()
@@ -64,7 +67,6 @@ def power_map(cov: np.ndarray, points=5000, db=True, dynamic_range_db=50, ax: pl
     ax.set_xlabel(r"$\phi$")
     ax.set_ylabel(r"$\theta$")
     fig.colorbar(im, ax=ax)
-    fig.show()
     return im
 
 
@@ -87,11 +89,17 @@ def compare_power_maps(input, output, expected) -> plt.Figure:
     Q_in = input.shape[0]
     Q_out = output.shape[0]
 
-    fig, axes = plt.subplots(2, 2)
+    fig, axes = plt.subplots(2, 3)
     for ax, mat, title in zip(axes.flat,
                               [input, output, expected, output[:Q_in, :Q_in]],
                               ["input", "output", "expected", "output truncated"]):
         power_map(mat, ax=ax)
+        ax.set_title(title)
+
+    for ax, mat, title in zip(axes.flatten()[4:],
+                              [output - expected, output[:Q_in, :Q_in]-input],
+                              ["output-input", "expected truncated - input"]):
+        power_map(mat, ax=ax, db=False)
         ax.set_title(title)
 
     fig.show()
@@ -108,3 +116,4 @@ def compare_power_maps(input, output, expected) -> plt.Figure:
 #
 # compare_covs(cov_in, cov_out, cov)
 # compare_power_maps(cov_in, cov_out, cov)
+# pass

@@ -113,14 +113,14 @@ def compare_power_maps(input, output, expected) -> plt.Figure:
     return fig
 
 #
-doa = np.array([[np.pi/3], [np.pi/2]])
-anm = np.conj(sh.mat(6, doa, is_transposed=True))
-cov = anm * anm.transpose().conj()
-power_map(cov)
-
-cov_in = cov[:25, :25]
-cov_out = np.eye(cov.shape[0])
-
-compare_covs(cov_in, cov_out, cov)
-compare_power_maps(cov_in, cov_out, cov)
-pass
+# doa = np.array([[np.pi/3], [np.pi/2]])
+# anm = np.conj(sh.mat(6, doa, is_transposed=True))
+# cov = anm * anm.transpose().conj()
+# power_map(cov)
+#
+# cov_in = cov[:25, :25]
+# cov_out = np.eye(cov.shape[0])
+#
+# compare_covs(cov_in, cov_out, cov)
+# compare_power_maps(cov_in, cov_out, cov)
+# pass

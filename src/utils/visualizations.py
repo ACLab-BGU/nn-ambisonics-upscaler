@@ -28,8 +28,11 @@ def add_sh_order_lines(ax: plt.Axes, order=None, args_dict=None, x_flag=True, y_
             ax.axhline(loc, color='red', **args_dict)
 
 
+# def sh_covariance_spatial_response(mat, num_of_points):
 
-h = covariance_matrix(np.arange(16*16).reshape((16, -1)))
-ax = h.axes
-add_sh_order_lines(ax, x_flag=False)
-ax.figure.show()
+
+
+# h = covariance_matrix(np.arange(16*16).reshape((16, -1)))
+# ax = h.axes
+# add_sh_order_lines(ax, x_flag=False)
+# ax.figure.show()

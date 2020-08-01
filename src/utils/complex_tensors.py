@@ -57,7 +57,7 @@ def complextorch2numpy(x, dim=0):
 
     assert x.shape[dim] == 2, "size of the imaginary dimensions must be 2!"
     if type(x) == torch.Tensor:
-        x = x.numpy()
+        x = x.detach().numpy()
 
     x = np.moveaxis(x, dim, 0)
     x = x[0] + 1j * x[1]

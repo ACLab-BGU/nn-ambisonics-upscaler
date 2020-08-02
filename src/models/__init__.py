@@ -1,4 +1,4 @@
-import src.models.fc_model as fc_model
+from src.models import fc_model
 
 
 def find_model_using_name(model_name):

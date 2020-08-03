@@ -13,6 +13,8 @@ arguments
     opts.plotFlag (1,1) logical = false
     opts.angle_dependence = true;
     opts.max_delay_of_early_reflections = 20e-3
+    opts.decimation_factor = 1;
+    opts.real_sh (1,1) logical = false
 end
 rng(seed);
 
@@ -61,8 +63,8 @@ if ~opts.no_signals
         reflectionsInfo.omega, ...
         "array_type", "anm",...
         "N", opts.target_sh_order, ...
-        "bpfFlag", false); 
-    
+        "bpfFlag", false);
+
     [h_array, reflectionsInfo.delay, roomParams] = rir_from_parametric(fs, ...
         reflectionsInfo.delay, ...
         reflectionsInfo.amp, ...
@@ -102,7 +104,7 @@ if opts.plotFlag
     figure("name", "RIR early");
     stem(reflectionsInfo.delay*1e3, reflectionsInfo.amp);
     xlim([0 opts.taumax*2*1e3]);
-    
+
     figure("name", "RIR all");
     semilogy(reflectionsInfo.delay, abs(reflectionsInfo.amp), '.');
     xline(sceneInfo.T60, "color", "r");
@@ -125,7 +127,21 @@ noise = randn(size(p))* 10^(-snr/20);
 p = p+noise;
 
 % % decimate (discard high frequencies)
-% [p, fs] = decimate_cols(p, fs, fmax*2*1.05);
+if opts.decimation_factor > 1
+    p_high = p;
+    p = zeros(ceil(size(p_high, 1)/opts.decimation_factor), size(p_high, 2));
+    for q=1:size(p,2)
+        [p(:,q), fs] = decimate(p(:,q), opts.decimation_factor);
+    end
+    fs = fs/opts.decimation_factor;
+end
 
+%% convert to real sh
+if opts.real_sh
+    anm_target = real(sft_complex_to_real(anm_target, 2));
+    if opts.array_type == "anm"
+        p = real(sft_complex_to_real(p, 2));
+    end
+end
 
 end

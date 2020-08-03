@@ -141,12 +141,11 @@ class BasicDatasetLT(data.Dataset):
         # take only a single frequency
         targets = targets[0, :]
 
+        # normalize
+        targets = targets / targets.norm()
+
         # generate input data
         inputs = downgrade_scm(targets, self.sh_order, axis=(1, 2))
-
-        # normalize
-        inputs = inputs / inputs.norm()
-        targets = targets / targets.norm()
 
         # perform some transformation
         if self.transform:

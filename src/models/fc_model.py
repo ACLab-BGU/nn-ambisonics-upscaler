@@ -122,7 +122,7 @@ class BaseModelLT(LightningModule):
             val_size = len(dataset) - train_size
             self.dataset_train, self.dataset_val = random_split(dataset, [train_size, val_size])
         elif stage == 'test':
-            self.dataset_test = BasicDatasetLT(self.hparams.data_path, train=False)
+            self.dataset_test = BasicDatasetLT(self.hparams.data_path, train=False, preload=self.hparams.preload_data, input_sh_order=self.hparams.input_sh_order)
         else:
             raise NotImplementedError
 

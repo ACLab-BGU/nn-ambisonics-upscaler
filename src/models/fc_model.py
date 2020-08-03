@@ -19,6 +19,7 @@ default_opts = {
     "experiment_name": 'fc_25rank_imagemethod',
     # ---network structure---
     "model_name": 'fc',
+    "input_sh_order": 3,
     "rank": 25, # None -> output is full matrix, Int -> output is low rank matrix transformed into full matrix
     "hidden_layers": 3,
     "hidden_sizes": [1000,1500,2000],
@@ -64,7 +65,7 @@ class BaseModelLT(LightningModule):
     def _get_input_output_sizes(self):
         # automatically get the input and output sizes
         # (values are casted into normal ints, to beautify the yaml format)
-        dataset = BasicDatasetLT(self.hparams.data_path, train=True, preload=False)
+        dataset = BasicDatasetLT(self.hparams.data_path, train=True, preload=False, input_sh_order=self.hparams.input_sh_order)
         input,target = next(iter(dataset))
         self.hparams.input_size = np.prod(input.shape).tolist()
         self.hparams.output_shape = list(target.shape)
@@ -114,11 +115,16 @@ class BaseModelLT(LightningModule):
         # OPTIONAL
 
         # train/val split
-        assert np.sum(self.hparams.train_val_split)==1, 'invalid split arguments'
-        dataset = BasicDatasetLT(self.hparams.data_path, train=True, preload=self.hparams.preload_data)
-        train_size = round(self.hparams.train_val_split[0] * len(dataset))
-        val_size = len(dataset) - train_size
-        self.dataset_train, self.dataset_val = random_split(dataset, [train_size, val_size])
+        if stage == 'fit':
+            assert np.sum(self.hparams.train_val_split)==1, 'invalid split arguments'
+            dataset = BasicDatasetLT(self.hparams.data_path, train=True, preload=self.hparams.preload_data, input_sh_order=self.hparams.input_sh_order)
+            train_size = round(self.hparams.train_val_split[0] * len(dataset))
+            val_size = len(dataset) - train_size
+            self.dataset_train, self.dataset_val = random_split(dataset, [train_size, val_size])
+        elif stage == 'test':
+            self.dataset_test = BasicDatasetLT(self.hparams.data_path, train=False, preload=self.hparams.preload_data, input_sh_order=self.hparams.input_sh_order)
+        else:
+            raise NotImplementedError
 
     def train_dataloader(self):
         # REQUIRED
@@ -132,8 +138,7 @@ class BaseModelLT(LightningModule):
 
     def test_dataloader(self):
         # OPTIONAL
-        dataset = BasicDatasetLT(self.hparams.data_path, train=False)
-        loader = DataLoader(dataset, batch_size=self.hparams.batch_size, num_workers=self.hparams.num_workers)
+        loader = DataLoader(self.dataset_test, batch_size=self.hparams.batch_size, num_workers=self.hparams.num_workers)
         return loader
 
     # ----- Training Loop -----

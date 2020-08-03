@@ -42,7 +42,10 @@ def update_opts_with_defaults(opts, defaults):
 def update_opts_with_flags(opts):
     if len(sys.argv) > 2:
         for flag in sys.argv[2:]:
-            key, value_str = flag.split("=")
+            key_val_tuple = flag.split("=")
+            if not len(key_val_tuple) == 2:
+                continue
+            key, value_str = key_val_tuple
             key = key.lstrip("-")
             try:
                 value = json.loads(value_str)
@@ -97,6 +100,7 @@ def get_default_opts(opts):
 
 
 def read_opts(opts):
+    # read config from yaml file / create basic config using model_name
     if type(opts) == str:
         if opts.endswith('yaml'):
             opts = EasyDict(read_yaml(opts))
@@ -108,6 +112,7 @@ def read_opts(opts):
 
 
 def print_opts(opts):
+    # print config
     print("Configuration Parameters: ")
     print("\n".join([k + ": " + str(v) for k, v in opts.items()]))
 

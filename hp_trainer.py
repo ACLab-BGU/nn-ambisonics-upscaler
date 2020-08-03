@@ -3,12 +3,13 @@ from src.train import train
 
 opts = {
     # ---folders---
-    "experiment_name": ['fc_imagemethod_lowrank'],
+    "experiment_name": ['fc_imagemethod_5to6_full'],
     # ---network structure---
     "model_name": ['fc'],
-    "rank": [10,25,35],  # None -> output is full matrix, Int -> output is low rank matrix transformed into full matrix
+    "input_sh_order": [5],
+    "rank": [None],  # None -> output is full matrix, Int -> output is low rank matrix transformed into full matrix
     "hidden_layers": [1,2],
-    "hidden_sizes": [1000, 2000],
+    "hidden_sizes": [1500, 2500, 3500],
     "residual_flag": [True,False],
     "residual_only": [False],
     "loss": ['mse'],  # 'mse'
@@ -20,7 +21,7 @@ opts = {
     "train_val_split": [[0.9, 0.1]],
     "preload_data": [True],
     # ---optimization---
-    "lr": [1e-2, 1e-3, 1e-4, 1e-5, 1e-6],
+    "lr": [1e-3, 1e-4, 1e-5],
     "max_epochs": [100],
     "gpus": [-1]
 }

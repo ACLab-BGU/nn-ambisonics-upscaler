@@ -8,4 +8,4 @@ def axis_tight(fig):
     fig.update_xaxes(constrain='domain')
 
 def set_colorbars_positions(fig):
-    print(3)
+    print('too hard and annoying..')

@@ -14,7 +14,7 @@ from src.utils.complex_tensors import get_real_imag_parts, complex_outer_product
 
 default_opts = {
     # ---folders---
-    "data_path":  os.path.join(get_data_dir(),'raw','image-method'),
+    "data_path":  os.path.join(get_data_dir(),'SCM','image-method'),
     "logs_path":  get_experiments_dir(),
     "experiment_name": 'fc_25rank_imagemethod',
     # ---network structure---

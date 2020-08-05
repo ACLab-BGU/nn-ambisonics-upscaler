@@ -15,12 +15,14 @@ def get_real_imag_parts(x):
 
     return x_real, x_imag
 
+
 def cat_real_imag_parts(x_real, x_imag):
     # x_real, x_imag - (N, M, L)
     # out - (N, 2, M, L)
 
-    shape_vec = (x_real.shape[0],1,*x_real.shape[1:])
-    return torch.cat((x_real.view(shape_vec),x_imag.view(shape_vec)),dim=1)
+    shape_vec = (x_real.shape[0], 1, *x_real.shape[1:])
+    return torch.cat((x_real.view(shape_vec), x_imag.view(shape_vec)), dim=1)
+
 
 def complex_mm(x, y):
     # x - ((N, M, L), (N, M, L))
@@ -63,3 +65,14 @@ def complextorch2numpy(x, dim=0):
     x = x[0] + 1j * x[1]
 
     return x
+
+
+def calc_scm(x, smoothing_dim, channels_dim, real_imag_dim, batch_dim):
+    T = x.shape[smoothing_dim]
+    Q = x.shape[channels_dim]
+    N = x.shape[batch_dim]
+
+    x = x.permute(real_imag_dim, batch_dim, channels_dim, smoothing_dim)
+    R = torch.zeros((N, Q, Q, 2))
+    R[:, :, :, 0], R[:, :, :, 1] = complex_outer_product((x[0], x[1]))
+    return R/T

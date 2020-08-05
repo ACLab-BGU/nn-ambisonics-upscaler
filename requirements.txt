@@ -21,3 +21,4 @@ Werkzeug==1.0.1
 
 matplotlib~=3.2.2
 yaml~=0.2.5
+scipy~=1.5.0

@@ -8,10 +8,10 @@ from src.options import read_yaml
 from src.utils.logging import get_scalars_from_tb_log
 
 k_best_models = 5
-PATH_EXP = '/Users/ranweisman/PycharmProjects/nn-ambisonics-upscaler/experiments/cloud_experiments/fc_imagemethod_5to6_full/'
+PATH_EXP = '/Users/ranweisman/PycharmProjects/nn-ambisonics-upscaler/experiments/cloud_experiments/fc_imagemethod_5to6_full'
 
 PATH = os.path.join(PATH_EXP,'*','*','*ckpt')
-PATH = os.path.join(PATH_EXP,'*','events*')
+# PATH = os.path.join(PATH_EXP,'*','events*')
 files = glob.glob(PATH)
 best_loss = [np.Inf] * k_best_models
 best_hparams = [None] * k_best_models

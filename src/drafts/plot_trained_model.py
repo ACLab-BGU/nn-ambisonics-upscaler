@@ -12,8 +12,10 @@ from src.utils import get_experiments_dir
 from src.utils.complex_tensors import complextorch2numpy
 import src.utils.visualizations as vis
 
+import matplotlib.pyplot as plt
+
 # --- load model ---
-version = 66
+version = 58
 
 CKPT_PATH = os.path.join(get_experiments_dir(),'cloud_experiments','fc_imagemethod_5to6_full')
 CKPT_PATH = os.path.join(CKPT_PATH,'version_' + str(version),'*','*ckpt')
@@ -23,15 +25,17 @@ model = BaseModelLT.load_from_checkpoint(CKPT_PATH,data_path=default_opts['data_
 model.setup('fit')
 model.setup('test')
 model.eval()
-loader = DataLoader(model.dataset_train, batch_size=model.hparams.batch_size, num_workers=model.hparams.num_workers)
+print(model.hparams)
 
 # --- load data &  estimate performance over all dataset ---
-# loader = DataLoader(model.dataset_test, batch_size=model.hparams.batch_size, num_workers=model.hparams.num_workers)
-# trainer = Trainer(logger=None)
-# trainer.test(model,test_dataloaders=loader)
+# loader_train = DataLoader(model.dataset_train, batch_size=model.hparams.batch_size, num_workers=model.hparams.num_workers)
+loader_test = DataLoader(model.dataset_test, batch_size=model.hparams.batch_size, num_workers=model.hparams.num_workers)
+trainer = Trainer(logger=None)
+trainer.test(model,test_dataloaders=loader_test)
 
 # --- loop - draw a single sample and plot ---
 loader = DataLoader(model.dataset_train, batch_size=1, num_workers=0)
+# loader = DataLoader(model.dataset_test, batch_size=1, num_workers=0)
 for x,y in loader:
 
     y_hat = model(x)
@@ -43,4 +47,5 @@ for x,y in loader:
     vis.compare_covs(x, y_hat, y)
     vis.compare_power_maps(x, y_hat, y)
 
+    plt.close('all')
     pass

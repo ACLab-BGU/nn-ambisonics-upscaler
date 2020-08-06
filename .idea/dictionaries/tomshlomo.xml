@@ -4,9 +4,11 @@
       <w>complextorch</w>
       <w>conv</w>
       <w>dtype</w>
+      <w>gpus</w>
       <w>hyperparameters</w>
       <w>narrowband</w>
       <w>nfft</w>
+      <w>stft</w>
     </words>
   </dictionary>
 </component>

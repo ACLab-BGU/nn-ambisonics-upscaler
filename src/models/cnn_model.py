@@ -10,11 +10,11 @@ from torch.utils.data import DataLoader, random_split
 
 from src.data.sig2scm_dataset import Dataset
 from src.utils import get_data_dir, get_experiments_dir
-from src.utils.complex_tensors import get_real_imag_parts, complex_outer_product, cat_real_imag_parts, calc_scm
+from src.utils.complex_tensors import calc_scm
 
 default_opts = {
     # ---folders---
-    "data_path": os.path.join(get_data_dir(), 'SCM', 'image-method'),
+    "data_path": os.path.join(get_data_dir(), '03082020_free_field'),
     "logs_path": get_experiments_dir(),
     "experiment_name": 'cnn_free_field',
     # ---data options---
@@ -24,8 +24,8 @@ default_opts = {
     "hidden_layers": 2,
     "kernel_widths": [1, 2, 3],
     "strides": [1, 1, 1],
-    "hidden_channels": [25*2, 36*2], #  *2 for real/imag
-    "residual_flag": True,
+    "hidden_channels": [25 * 2, 36 * 2],  # *2 for real/imag
+    "residual_flag": True,  # TODO: implement residual paths
     "loss": 'mse',  # 'mse'
     # ---data---
     # "dtype": torch.float32, # TODO: implement (does errors in saving hyperparameters)
@@ -33,7 +33,7 @@ default_opts = {
     "batch_size": 25,
     "num_workers": 0,
     "train_val_split": [0.9, 0.1],
-    "preload_data": True,
+    "preload_data": False,
     # ---optimization---
     "lr": 3e-4,
     "max_epochs": 1000,
@@ -54,9 +54,7 @@ class CNN(LightningModule):
         self._get_input_output_sizes()
 
         # define network parameters
-        if np.isscalar(self.hparams.hidden_sizes):
-            self.hparams.hidden_sizes = [self.hparams.hidden_sizes] * self.hparams.hidden_layers
-        channels = [self.hparams.input_channels, *self.hparams.hidden_channels, self.hparams.last_layer_size]
+        channels = [self.hparams.input_channels, *self.hparams.hidden_channels, self.hparams.output_channels]
         lst = []
         zipped = zip(channels, channels[1:], self.hparams.kernel_widths, self.hparams.strides)
         for channels_in, channels_out, kernel_size, stride in zipped:
@@ -71,29 +69,28 @@ class CNN(LightningModule):
 
         dataset = Dataset(self.hparams.data_path, self.hparams.frequency, train=True, preload=False)
         x, target = next(iter(dataset))
-        #  input shape should be (N, 2, Q_in, T), target shape should be (N, 2, Q_out, Q_out)
-        assert x.shape[0] == target.shape[0], "0 dim (batch size) doesn't match"
-        assert x.shape[1] == 2, "1 dim (real-imag) of input must be 2"
-        assert target.shape[1] == 2, "1 dim (real-imag) of target must be 2"
-        assert target.shape[2] == target.shape[3], "target must be a stack of square matrices"
+        #  input shape should be (2, Q_in, T), target shape should be (2, Q_out, Q_out)
+        assert x.shape[0] == 2, "0 dim (real-imag) of input must be 2"
+        assert target.shape[0] == 2, "0 dim (real-imag) of target must be 2"
+        assert target.shape[1] == target.shape[2], "target must be a stack of square matrices"
 
-        self.hparams.input_channels = x.shape[2]*2
-        self.hparams.output_channels = target.shape[2]*2
+        self.hparams.input_channels = x.shape[1] * 2
+        self.hparams.output_channels = target.shape[1] * 2
 
     def forward(self, x):
         # REQUIRED
-        assert x.shape[2] == 2, "2nd dim (real-imag) must be 2"
+        assert x.shape[1] == 2, "1st dim (real-imag) must be 2"
 
-        N, Q_in, _, T = x.shape
-        x = x.view((N, 2*Q_in, T))
+        N, _, Q_in, T = x.shape
+        x = x.view((N, 2 * Q_in, T))
         for layer in self.conv_layers:
             x = layer(x)
-            if layer != self.linears[-1]:  # no activation at last layer
+            if layer != self.conv_layers[-1]:  # no activation at last layer
                 x = F.relu(x)
 
         #  x should now be of shape (N, 2*Q_out, T).
         #  Reshape to (N, Q_out, 2, T) before applying time smoothing
-        Q_out = x.shape[1]//2
+        Q_out = x.shape[1] // 2
         T = x.shape[2]
         x = x.view((N, 2, Q_out, T))
 
@@ -114,12 +111,14 @@ class CNN(LightningModule):
         # train/val split
         if stage == 'fit':
             assert np.sum(self.hparams.train_val_split) == 1, 'invalid split arguments'
-            dataset = Dataset(self.hparams.data_path, self.hparams.frequency, train=True, preload=self.hparams.preload_data)
+            dataset = Dataset(self.hparams.data_path, self.hparams.frequency, train=True,
+                              preload=self.hparams.preload_data)
             train_size = round(self.hparams.train_val_split[0] * len(dataset))
             val_size = len(dataset) - train_size
             self.dataset_train, self.dataset_val = random_split(dataset, [train_size, val_size])
         elif stage == 'test':
-            self.dataset_test = Dataset(self.hparams.data_path, self.hparams.frequency, train=False, preload=self.hparams.preload_data)
+            self.dataset_test = Dataset(self.hparams.data_path, self.hparams.frequency, train=False,
+                                        preload=self.hparams.preload_data)
         else:
             raise NotImplementedError
 

@@ -6,22 +6,20 @@ import torch
 import torch.utils.data as data
 
 from src.data.matlab_loaders import load_mat_file
+from src.utils.audio import torch_stft_nd
 
 
 def get_narrowband_signal(x, nfft, freq_bin):
     # x is of shape (time, channels)
-    x = torch_stft_nd(x, time_dim=0, nfft=nfft, hop=nfft//4, window=nfft, onesided=True)
+    x = torch_stft_nd(torch.from_numpy(x), time_dim=0,
+                      n_fft=nfft, hop_length=nfft//4, onesided=True, window=torch.hann_window(nfft))
     # x_stft is of shape (channels, freq, time, real/imag)
 
     # slice to a single freq
     x = x[:, freq_bin, :, :]
 
-    # transform to shape (freq, real/imag, channels, time)
-    x = x.permute((1, 3, 0, 2))
     # transform to shape (real/imag, channels, time)
-    x = x[0]
-
-    raise NotImplemented
+    return x.permute((2, 0, 1))
 
 
 def load_single_freq(file, freq):
@@ -65,7 +63,8 @@ class Dataset(data.Dataset):
         self.samples = []
 
         # load all files to memory and form the database
-        for fn in self.filenames:
+        for i, fn in enumerate(self.filenames):
+            print(i/len(self.filenames))
             self.samples.append(load_single_freq(fn, self.frequency))
 
     def __getitem__(self, item: int):
@@ -88,7 +87,7 @@ class Dataset(data.Dataset):
         y /= norm_x ** 2
 
         # return sample
-        return x, y
+        return x.type(self.dtype), y.type(self.dtype)
 
     def __len__(self):
         """

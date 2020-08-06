@@ -11,7 +11,8 @@ def load_mat_file(file_name):
     for f, R_vec in enumerate(R_vecs):
         d['R'][f, :, :] = vectorized_cov_to_mat(R_vec)
     d['R'] = d['R'] / d['R_scaling']
-    d['anm'] = d['anm'].astype(np.cdouble) / d['anm_scaling']
+    d['anm'] = d['anm'].astype(np.double) / d['anm_scaling']
+    d['nfft'] = int(d['nfft'])
     return d
 
 

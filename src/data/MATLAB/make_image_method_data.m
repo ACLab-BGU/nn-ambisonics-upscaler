@@ -10,7 +10,7 @@ arguments
     opts.number_of_reflections (1,1) double = inf
 %     opts.output_freqs = "all" % relevant only for output_type = "covs".
     opts.folder_path (1,1) string = fullfile(get_raw_data_folder_path(), "image-method");
-    opts.decimation_factor = 1
+    opts.decimation_factor = 3
     opts.R_dtype = "single"
     opts.anm_dtype = "int16"
     opts.nfft = 512;

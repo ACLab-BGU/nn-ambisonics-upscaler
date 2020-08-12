@@ -27,6 +27,9 @@ default_opts = {
     "hidden_channels": [25 * 2, 36 * 2],  # *2 for real/imag
     "residual_flag": True,  # TODO: implement residual paths
     "loss": 'mse',  # 'mse'
+    "sh_order_sig": float("inf"),
+    "sh_order_scm": float("inf"),
+    "time_len_sig": float("inf"),
     # ---data---
     # "dtype": torch.float32, # TODO: implement (does errors in saving hyperparameters)
     "transform": None,
@@ -50,6 +53,10 @@ class CNN(LightningModule):
         # save hyperparameters
         self.save_hyperparameters(opts)
 
+        # wrap dataset arguments in a dictionary (just for code beauty)
+        self.dataset_args = dict(frequency=self.hparams.frequency, sh_order_sig=self.hparams.sh_order_sig, sh_order_scm=self.hparams.sh_order_scm,
+                                 time_len_sig=self.hparams.time_len_sig)
+
         # get input and output sizes
         self._get_input_output_sizes()
 
@@ -69,7 +76,7 @@ class CNN(LightningModule):
     def _get_input_output_sizes(self):
         # determine the number of channels of the input and output layers from data.
 
-        dataset = Dataset(self.hparams.data_path, self.hparams.frequency, train=True, preload=False)
+        dataset = Dataset(self.hparams.data_path, train=True, preload=False, **self.dataset_args)
         x, target = next(iter(dataset))
         #  input shape should be (2, Q_in, T), target shape should be (2, Q_out, Q_out)
         assert x.shape[0] == 2, "0 dim (real-imag) of input must be 2"
@@ -126,18 +133,17 @@ class CNN(LightningModule):
 
     def setup(self, stage):
         # OPTIONAL
+        frequency = self.hparams.frequency,
 
         # train/val split
         if stage == 'fit':
             assert np.sum(self.hparams.train_val_split) == 1, 'invalid split arguments'
-            dataset = Dataset(self.hparams.data_path, self.hparams.frequency, train=True,
-                              preload=self.hparams.preload_data)
+            dataset = Dataset(self.hparams.data_path, train=True, preload=self.hparams.preload_data, **self.dataset_args)
             train_size = round(self.hparams.train_val_split[0] * len(dataset))
             val_size = len(dataset) - train_size
             self.dataset_train, self.dataset_val = random_split(dataset, [train_size, val_size])
         elif stage == 'test':
-            self.dataset_test = Dataset(self.hparams.data_path, self.hparams.frequency, train=False,
-                                        preload=self.hparams.preload_data)
+            self.dataset_test = Dataset(self.hparams.data_path, train=False, preload=self.hparams.preload_data, **self.dataset_args)
         else:
             raise NotImplementedError
 

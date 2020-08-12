@@ -12,7 +12,7 @@ from src.utils.audio import torch_stft_nd
 def get_narrowband_signal(x, nfft, freq_bin):
     # x is of shape (time, channels)
     x = torch_stft_nd(torch.from_numpy(x), time_dim=0,
-                      n_fft=nfft, hop_length=nfft//4, onesided=True, window=torch.hann_window(nfft))
+                      n_fft=nfft, hop_length=nfft // 4, onesided=True, window=torch.hann_window(nfft))
     # x_stft is of shape (channels, freq, time, real/imag)
 
     # slice to a single freq
@@ -22,8 +22,10 @@ def get_narrowband_signal(x, nfft, freq_bin):
     return x.permute((2, 0, 1))
 
 
-def load_single_freq(file, freq, cache=None):
+def load_single_freq(file, freq, cache=None, sh_order_sig=float("inf"), sh_order_scm=float("inf"),
+                     time_len_sig=float("inf")):
     d, cache = load_mat_file(file, cache)
+    d = select_orders_and_time(d, sh_order_sig=sh_order_sig, sh_order_scm=sh_order_scm, time_len_sig=time_len_sig)
     freq_bin = np.argmin(np.abs(d['freq'] - freq))
     x = get_narrowband_signal(d['anm'], d['nfft'], freq_bin)
     # x is of shape (real/imag, channels, time)
@@ -36,8 +38,35 @@ def load_single_freq(file, freq, cache=None):
     return x, y, cache
 
 
+def select_orders_and_time(d, sh_order_sig, sh_order_scm, time_len_sig):
+    ''' takes the loaded data in a dictionary d, and process it so only selected
+    SH orders of signal and SCM, and desired time length of the signals, are saved'''
+
+    L_sig = (sh_order_sig + 1) ** 2
+    L_scm = (sh_order_scm + 1) ** 2
+    samples = (time_len_sig * d['fs'])
+
+    if L_sig == np.inf:
+        L_sig = None
+    else:
+        L_sig = int(L_sig)
+    if L_scm == np.inf:
+        L_scm = None
+    else:
+        L_scm = int(L_scm)
+    if samples == np.inf:
+        samples = None
+    else:
+        samples = int(samples)
+
+    d['anm'] = d['anm'][:samples, :L_sig]
+    d['R'] = d['R'][:, :L_scm, :L_scm]
+
+    return d
+
 class Dataset(data.Dataset):
-    def __init__(self, root, frequency, transform=None, preload=True, dtype=torch.float32, train=True, sh_order_sig=float("inf"), sh_order_scm=float("inf"), time_len_sig=float("inf")):
+    def __init__(self, root, frequency, transform=None, preload=True, dtype=torch.float32, train=True,
+                 sh_order_sig=float("inf"), sh_order_scm=float("inf"), time_len_sig=float("inf")):
 
         self.dtype = dtype
         self.transform = transform
@@ -67,9 +96,10 @@ class Dataset(data.Dataset):
 
         # load all files to memory and form the database
         for i, fn in enumerate(self.filenames):
-            print(i/len(self.filenames))
-            x, y, self.vec2mat_cache = load_single_freq(fn, self.frequency, self.vec2mat_cache, sh_order_sig=self.sh_order_sig,
-                                                 sh_order_scm=self.sh_order_scm,time_len_sig=self.time_len_sig)
+            print(i / len(self.filenames))
+            x, y, self.vec2mat_cache = load_single_freq(fn, self.frequency, self.vec2mat_cache,
+                                                        sh_order_sig=self.sh_order_sig,
+                                                        sh_order_scm=self.sh_order_scm, time_len_sig=self.time_len_sig)
             self.samples.append((x, y))
 
     def __getitem__(self, item: int):
@@ -81,8 +111,9 @@ class Dataset(data.Dataset):
         if self.preload_flag:
             x, y = self.samples[item]
         else:
-            x, y, self.vec2mat_cache = load_single_freq(self.filenames[item], self.frequency, self.vec2mat_cache, sh_order_sig=self.sh_order_sig,
-                                                 sh_order_scm=self.sh_order_scm,time_len_sig=self.time_len_sig)
+            x, y, self.vec2mat_cache = load_single_freq(self.filenames[item], self.frequency, self.vec2mat_cache,
+                                                        sh_order_sig=self.sh_order_sig,
+                                                        sh_order_scm=self.sh_order_scm, time_len_sig=self.time_len_sig)
 
         # perform some transformation
         if self.transform:

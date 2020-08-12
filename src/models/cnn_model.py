@@ -27,6 +27,9 @@ default_opts = {
     "hidden_channels": [25 * 2, 36 * 2],  # *2 for real/imag
     "residual_flag": True,  # TODO: implement residual paths
     "loss": 'mse',  # 'mse'
+    "sh_order_sig": float("inf"),
+    "sh_order_scm": float("inf"),
+    "time_len_sig": float("inf"),
     # ---data---
     # "dtype": torch.float32, # TODO: implement (does errors in saving hyperparameters)
     "transform": None,
@@ -111,14 +114,14 @@ class CNN(LightningModule):
         # train/val split
         if stage == 'fit':
             assert np.sum(self.hparams.train_val_split) == 1, 'invalid split arguments'
-            dataset = Dataset(self.hparams.data_path, self.hparams.frequency, train=True,
-                              preload=self.hparams.preload_data)
+            dataset = Dataset(self.hparams.data_path, self.hparams.frequency, train=True, preload=self.hparams.preload_data,
+                              sh_order_sig=self.sh_order_sig, sh_order_scm=self.sh_order_scm, time_len_sig=self.time_len_sig)
             train_size = round(self.hparams.train_val_split[0] * len(dataset))
             val_size = len(dataset) - train_size
             self.dataset_train, self.dataset_val = random_split(dataset, [train_size, val_size])
         elif stage == 'test':
-            self.dataset_test = Dataset(self.hparams.data_path, self.hparams.frequency, train=False,
-                                        preload=self.hparams.preload_data)
+            self.dataset_test = Dataset(self.hparams.data_path, self.hparams.frequency, train=False, preload=self.hparams.preload_data,
+                                        sh_order_sig=self.sh_order_sig, sh_order_scm=self.sh_order_scm, time_len_sig=self.time_len_sig)
         else:
             raise NotImplementedError
 

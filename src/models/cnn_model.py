@@ -129,11 +129,11 @@ class CNN(LightningModule):
 
         # x is of shape (N, 2, Q_out, Q_out)
         if self.hparams.residual_flag:
-            beta = torch.sigmoid(self.alpha)
             if self.hparams.force_residual:
                 x_low_block = low_order_scm
             else:
                 x_low_block = x[:, :, :Q_in, :Q_in].clone()
+                beta = torch.sigmoid(self.alpha)
                 x_low_block = (1 - beta) * x_low_block + beta * low_order_scm
 
             x[:, :, :Q_in, :Q_in] = x_low_block

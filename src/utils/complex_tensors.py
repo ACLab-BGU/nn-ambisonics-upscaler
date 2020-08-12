@@ -73,6 +73,6 @@ def calc_scm(x, smoothing_dim, channels_dim, real_imag_dim, batch_dim):
     N = x.shape[batch_dim]
 
     x = x.permute(real_imag_dim, batch_dim, channels_dim, smoothing_dim)
-    R = torch.zeros((N, 2, Q, Q))
+    R = torch.zeros((N, 2, Q, Q), device=x.device) # make sure R is on the same device
     R[:, 0, :, :], R[:, 1, :, :] = complex_outer_product((x[0], x[1]))
     return R/T

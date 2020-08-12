@@ -37,11 +37,15 @@ def load_single_freq(file, freq, cache=None):
 
 
 class Dataset(data.Dataset):
-    def __init__(self, root, frequency, transform=None, preload=True, dtype=torch.float32, train=True):
+    def __init__(self, root, frequency, transform=None, preload=True, dtype=torch.float32, train=True, sh_order_sig=float("inf"), sh_order_scm=float("inf"), time_len_sig=float("inf")):
 
         self.dtype = dtype
         self.transform = transform
         self.preload_flag = preload
+        self.sh_order_sig = sh_order_sig
+        self.sh_order_scm = sh_order_scm
+        self.time_len_sig = time_len_sig
+
         if train:
             root = os.path.join(root, 'train')
         else:
@@ -64,7 +68,8 @@ class Dataset(data.Dataset):
         # load all files to memory and form the database
         for i, fn in enumerate(self.filenames):
             print(i/len(self.filenames))
-            x, y, self.vec2mat_cache = load_single_freq(fn, self.frequency, self.vec2mat_cache)
+            x, y, self.vec2mat_cache = load_single_freq(fn, self.frequency, self.vec2mat_cache, sh_order_sig=self.sh_order_sig,
+                                                 sh_order_scm=self.sh_order_scm,time_len_sig=self.time_len_sig)
             self.samples.append((x, y))
 
     def __getitem__(self, item: int):
@@ -76,7 +81,8 @@ class Dataset(data.Dataset):
         if self.preload_flag:
             x, y = self.samples[item]
         else:
-            x, y, self.vec2mat_cache = load_single_freq(self.filenames[item], self.frequency, self.vec2mat_cache)
+            x, y, self.vec2mat_cache = load_single_freq(self.filenames[item], self.frequency, self.vec2mat_cache, sh_order_sig=self.sh_order_sig,
+                                                 sh_order_scm=self.sh_order_scm,time_len_sig=self.time_len_sig)
 
         # perform some transformation
         if self.transform:

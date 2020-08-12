@@ -39,6 +39,8 @@ default_opts = {
     "preload_data": False,
     # ---optimization---
     "lr": 3e-4,
+    "lr_sched_thresh": 0.01,
+    "lr_sched_patience": 10,
     "max_epochs": 1000,
     "gpus": -1
 }
@@ -127,7 +129,11 @@ class CNN(LightningModule):
 
     def configure_optimizers(self):
         # REQUIRED
-        return optim.Adam(self.parameters(), lr=self.hparams.lr)
+        optimizer = optim.Adam(self.parameters(), lr=self.hparams.lr)
+        scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer,
+                                                         patience=self.hparams.lr_sched_patience,
+                                                         threshold=self.hparams.lr_sched_thresh, verbose=True)
+        return [optimizer], [scheduler]
 
     # ----- Data Loaders -----
 

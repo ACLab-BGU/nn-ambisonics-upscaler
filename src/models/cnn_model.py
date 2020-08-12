@@ -57,14 +57,22 @@ class CNN(LightningModule):
         self.save_hyperparameters(opts)
 
         # wrap dataset arguments in a dictionary (just for code beauty)
-        self.dataset_args = dict(frequency=self.hparams.frequency, sh_order_sig=self.hparams.sh_order_sig, sh_order_scm=self.hparams.sh_order_scm,
+        self.dataset_args = dict(frequency=self.hparams.frequency, sh_order_sig=self.hparams.sh_order_sig,
+                                 sh_order_scm=self.hparams.sh_order_scm,
                                  time_len_sig=self.hparams.time_len_sig)
 
         # get input and output sizes
         self._get_input_output_sizes()
 
         # define network parameters
-        channels = [self.hparams.input_channels, *self.hparams.hidden_channels, self.hparams.output_channels]
+        if len(self.hparams.hidden_channels) == 0:
+            channels = list(np.linspace(self.hparams.input_channels,
+                                        self.hparams.output_channels,
+                                        self.hparams.hidden_layers + 2,
+                                        dtype=np.int))
+        else:
+            channels = [self.hparams.input_channels, *self.hparams.hidden_channels, self.hparams.output_channels]
+
         lst = []
         zipped = zip(channels, channels[1:], self.hparams.kernel_widths, self.hparams.strides)
         for channels_in, channels_out, kernel_size, stride in zipped:
@@ -126,7 +134,7 @@ class CNN(LightningModule):
                 x_low_block = low_order_scm
             else:
                 x_low_block = x[:, :, :Q_in, :Q_in].clone()
-                x_low_block = (1-beta) * x_low_block + beta * low_order_scm
+                x_low_block = (1 - beta) * x_low_block + beta * low_order_scm
 
             x[:, :, :Q_in, :Q_in] = x_low_block
 
@@ -149,12 +157,14 @@ class CNN(LightningModule):
         # train/val split
         if stage == 'fit':
             assert np.sum(self.hparams.train_val_split) == 1, 'invalid split arguments'
-            dataset = Dataset(self.hparams.data_path, train=True, preload=self.hparams.preload_data, **self.dataset_args)
+            dataset = Dataset(self.hparams.data_path, train=True, preload=self.hparams.preload_data,
+                              **self.dataset_args)
             train_size = round(self.hparams.train_val_split[0] * len(dataset))
             val_size = len(dataset) - train_size
             self.dataset_train, self.dataset_val = random_split(dataset, [train_size, val_size])
         elif stage == 'test':
-            self.dataset_test = Dataset(self.hparams.data_path, train=False, preload=self.hparams.preload_data, **self.dataset_args)
+            self.dataset_test = Dataset(self.hparams.data_path, train=False, preload=self.hparams.preload_data,
+                                        **self.dataset_args)
         else:
             raise NotImplementedError
 
@@ -189,8 +199,8 @@ class CNN(LightningModule):
         tensorboard_logs = {'train_loss': avg_loss}
 
         # TODO: wrap tensorboard stuff more elegantly, in a different function
-        for i,layer in enumerate(self.conv_layers):
-            self.logger.experiment.add_histogram("layer " + str(i) + " - weights",layer.weight,self.current_epoch)
+        for i, layer in enumerate(self.conv_layers):
+            self.logger.experiment.add_histogram("layer " + str(i) + " - weights", layer.weight, self.current_epoch)
             self.logger.experiment.add_histogram("layer " + str(i) + " - bias", layer.bias, self.current_epoch)
 
         return {'log': tensorboard_logs}

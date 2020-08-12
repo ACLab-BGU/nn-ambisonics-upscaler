@@ -66,7 +66,8 @@ for i=1:buffer_size:nref
     if I(end)>nref
         I(I>nref)=[];
     end
-    Yh = conj(shmat_fast(N, doa(I,:), opts.isComplexSH, false));
+%     Yh = conj(shmat_fast(N, doa(I,:), opts.isComplexSH, false));
+    Yh = conj(shmat(N, doa(I,:), opts.isComplexSH, false));
     Yh_amp = Yh .* amp(I); 
     [xx, yy] = ndgrid(delay(I)+1,q);
     hnm = hnm + accumarray([xx(:) yy(:)], reshape(Yh_amp, 1, []), sz); 

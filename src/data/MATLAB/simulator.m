@@ -126,13 +126,10 @@ anm_target = anm_target./std(anm_target(:,1));
 noise = randn(size(p))* 10^(-snr/20);
 p = p+noise;
 
-% % decimate (discard high frequencies)
+%% decimate
 if opts.decimation_factor > 1
-    p_high = p;
-    p = zeros(ceil(size(p_high, 1)/opts.decimation_factor), size(p_high, 2));
-    for q=1:size(p,2)
-        [p(:,q), fs] = decimate(p(:,q), opts.decimation_factor);
-    end
+    p = decimate_cols(p, opts.decimation_factor);
+    anm_target = decimate_cols(anm_target, opts.decimation_factor);
     fs = fs/opts.decimation_factor;
 end
 

@@ -1,13 +1,13 @@
 restoredefaultpath
 addpath('spherical harmonics/');
+addpath('/Users/tomshlomo/Datasets/TSP');
 
-%%
-SELECTED_FREQ = 500;
+[num_of_reflections, source_type] = ndgrid([inf, 10, 0], ["whitenoise", "speech"]);
+num_of_filers = 1000;
 
-%%
-[p, anm_target, fs, reflectionsInfo, sceneInfo, s] = simulator(1);
-
-%%
-[R_p, freq] = calculate_narrowband_scm(p, fs);
-R_anm_target = calculate_narrowband_scm(anm_target, fs);
-[~, i] = min(abs(freq-SELECTED_FREQ));
+for i=1:numel(num_of_reflections)
+    folder_name = sprintf("%s_%d_reflections", source_type(i), num_of_reflections(i));
+    folder_path = fullfile(get_raw_data_folder_path(), folder_name);
+    mkdir(folder_path);
+    make_image_method_data(num_of_filers, 1, "number_of_reflections", num_of_reflections(i), "folder_path", folder_path, "source_type", source_type(i));
+end

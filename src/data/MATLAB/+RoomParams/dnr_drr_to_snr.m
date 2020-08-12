@@ -7,7 +7,11 @@ function snr_db = dnr_drr_to_snr(dnr_db,drr_db)
 % energies of the direct and reverberant parts. This might not be true for
 % input signals with sufficiently long autocorrelation.
 
-
+if dnr_db==inf
+    snr_db = inf;
+    return
+end
+    
 dnr = 10^(dnr_db/10);
 drr = 10^(drr_db/10);
 

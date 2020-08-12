@@ -61,6 +61,8 @@ class CNN(LightningModule):
             lst.append(nn.Conv1d(channels_in, channels_out, kernel_size, stride))
 
         self.conv_layers = nn.ModuleList(lst)
+        self.alpha = nn.Parameter(torch.tensor(0., requires_grad=True))  # logit scaling of residual
+
         loss_dict = {'mse': lambda x, y: nn.MSELoss()(x, y) * np.prod(x.shape[1:])}
         self.loss = loss_dict[self.hparams.loss]
 
@@ -79,23 +81,40 @@ class CNN(LightningModule):
 
     def forward(self, x):
         # REQUIRED
+
+        # x should be of shape (N, 2, Q_in, T)
         assert x.shape[1] == 2, "1st dim (real-imag) must be 2"
 
         N, _, Q_in, T = x.shape
+        low_order_scm = None
+
+        # merge real/imag channels to a single axis
+        if self.hparams.residual_flag:
+            low_order_scm = calc_scm(x, smoothing_dim=3, channels_dim=2, real_imag_dim=1, batch_dim=0)
+
         x = x.view((N, 2 * Q_in, T))
+
+        # apply convolutional layers
         for layer in self.conv_layers:
             x = layer(x)
             if layer != self.conv_layers[-1]:  # no activation at last layer
                 x = F.relu(x)
 
         #  x should now be of shape (N, 2*Q_out, T).
-        #  Reshape to (N, Q_out, 2, T) before applying time smoothing
+        #  Reshape to (N, 2, Q_out, T) before applying time smoothing
         Q_out = x.shape[1] // 2
         T = x.shape[2]
         x = x.view((N, 2, Q_out, T))
 
         # calculate SCM using time smoothing
         x = calc_scm(x, smoothing_dim=3, channels_dim=2, real_imag_dim=1, batch_dim=0)
+
+        # x is of shape (N, 2, Q_out, Q_out)
+        if self.hparams.residual_flag:
+            beta = torch.sigmoid(self.alpha)
+            x_low_block = x[:, :, :Q_in, :Q_in].clone()
+            x_low_block = (1-beta) * x_low_block + beta * low_order_scm
+            x[:, :, :Q_in, :Q_in] = x_low_block
 
         return x
 

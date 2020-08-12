@@ -3,9 +3,11 @@
     <words>
       <w>complextorch</w>
       <w>conv</w>
+      <w>convolutional</w>
       <w>dtype</w>
       <w>gpus</w>
       <w>hyperparameters</w>
+      <w>logit</w>
       <w>narrowband</w>
       <w>nfft</w>
       <w>stft</w>

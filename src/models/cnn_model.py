@@ -25,7 +25,8 @@ default_opts = {
     "kernel_widths": [1, 2, 3],
     "strides": [1, 1, 1],
     "hidden_channels": [25 * 2, 36 * 2],  # *2 for real/imag
-    "residual_flag": True,  # TODO: implement residual paths
+    "residual_flag": True,
+    "force_residual": True,
     "loss": 'mse',  # 'mse'
     "sh_order_sig": float("inf"),
     "sh_order_scm": float("inf"),
@@ -121,8 +122,12 @@ class CNN(LightningModule):
         # x is of shape (N, 2, Q_out, Q_out)
         if self.hparams.residual_flag:
             beta = torch.sigmoid(self.alpha)
-            x_low_block = x[:, :, :Q_in, :Q_in].clone()
-            x_low_block = (1-beta) * x_low_block + beta * low_order_scm
+            if self.hparams.force_residual:
+                x_low_block = low_order_scm
+            else:
+                x_low_block = x[:, :, :Q_in, :Q_in].clone()
+                x_low_block = (1-beta) * x_low_block + beta * low_order_scm
+
             x[:, :, :Q_in, :Q_in] = x_low_block
 
         return x

@@ -51,7 +51,6 @@ class Dataset(data.Dataset):
         self.len = len(self.filenames)
 
         self.frequency = frequency
-        # self.frequencies = load_free_field_frequencies()  # frequencies of each SCM in the dataset
 
         if preload:
             self._preload()
@@ -82,9 +81,13 @@ class Dataset(data.Dataset):
         if self.transform:
             x, y = self.transform(x, y)
 
-        norm_x = torch.norm(x)
-        x /= norm_x
-        y /= norm_x ** 2
+        # norm_x = torch.norm(x)
+        # x /= norm_x
+        # y /= norm_x ** 2
+
+        norm_y = torch.norm(y)
+        y /= norm_y
+        x /= torch.sqrt(norm_y)
 
         # return sample
         return x.type(self.dtype), y.type(self.dtype)

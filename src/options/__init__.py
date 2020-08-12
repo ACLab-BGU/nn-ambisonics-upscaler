@@ -82,10 +82,11 @@ def prepare_opts(base_opts, opts=None, with_flags=True, print_flag=False):
 def validate_opts(opts, print_flag=True):
     ''' validate that the given options are OK, and perform some automatic fixes if needed'''
 
+    # TODO: make it work on the cloud
     # GPU
-    if ~torch.cuda.is_available() and opts['gpus'] != 0:
-        warnings.warn('GPU is not available, using CPU instead')
-        opts['gpus'] = 0
+    # if ~torch.cuda.is_available() and opts['gpus'] != 0:
+    #     warnings.warn('GPU is not available, using CPU instead')
+    #     opts['gpus'] = 0
 
     # Split data to train/validation
     assert np.sum(opts['train_val_split']) == 1, 'invalid split arguments'

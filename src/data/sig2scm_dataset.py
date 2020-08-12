@@ -22,8 +22,8 @@ def get_narrowband_signal(x, nfft, freq_bin):
     return x.permute((2, 0, 1))
 
 
-def load_single_freq(file, freq):
-    d = load_mat_file(file)
+def load_single_freq(file, freq, cache=None):
+    d, cache = load_mat_file(file, cache)
     freq_bin = np.argmin(np.abs(d['freq'] - freq))
     x = get_narrowband_signal(d['anm'], d['nfft'], freq_bin)
     # x is of shape (real/imag, channels, time)
@@ -33,7 +33,7 @@ def load_single_freq(file, freq):
     y = torch.stack([torch.from_numpy(np.real(y)), torch.from_numpy(np.imag(y))])
 
     # y is now of show (2, channels_out, channels_out)
-    return x, y
+    return x, y, cache
 
 
 class Dataset(data.Dataset):
@@ -51,7 +51,7 @@ class Dataset(data.Dataset):
         self.len = len(self.filenames)
 
         self.frequency = frequency
-
+        self.vec2mat_cache = None
         if preload:
             self._preload()
 
@@ -64,7 +64,8 @@ class Dataset(data.Dataset):
         # load all files to memory and form the database
         for i, fn in enumerate(self.filenames):
             print(i/len(self.filenames))
-            self.samples.append(load_single_freq(fn, self.frequency))
+            x, y, self.vec2mat_cache = load_single_freq(fn, self.frequency, self.vec2mat_cache)
+            self.samples.append((x, y))
 
     def __getitem__(self, item: int):
         """
@@ -75,7 +76,7 @@ class Dataset(data.Dataset):
         if self.preload_flag:
             x, y = self.samples[item]
         else:
-            x, y = load_single_freq(self.filenames[item], self.frequency)
+            x, y, self.vec2mat_cache = load_single_freq(self.filenames[item], self.frequency, self.vec2mat_cache)
 
         # perform some transformation
         if self.transform:

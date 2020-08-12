@@ -12,7 +12,7 @@ def train(opts):
 
     model = prepare_model(full_opts)
     logger = prepare_logger(full_opts)
-    trainer = prepare_trainer(full_opts,logger)
+    trainer = prepare_trainer(full_opts, logger)
 
     trainer.fit(model)
 

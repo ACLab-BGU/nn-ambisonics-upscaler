@@ -7,6 +7,8 @@ import warnings
 import torch
 import yaml
 
+import numpy as np
+
 from src.models import find_model_using_name
 
 
@@ -84,6 +86,9 @@ def validate_opts(opts, print_flag=True):
     if ~torch.cuda.is_available() and opts['gpus'] != 0:
         warnings.warn('GPU is not available, using CPU instead')
         opts['gpus'] = 0
+
+    # Split data to train/validation
+    assert np.sum(opts['train_val_split']) == 1, 'invalid split arguments'
 
     # print
     if print_flag:

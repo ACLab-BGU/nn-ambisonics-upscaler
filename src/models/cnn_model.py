@@ -183,6 +183,11 @@ class CNN(LightningModule):
         avg_loss = torch.stack([x['batch_loss'] for x in outputs]).mean()
         tensorboard_logs = {'train_loss': avg_loss}
 
+        # TODO: wrap tensorboard stuff more elegantly, in a different function
+        for i,layer in enumerate(self.conv_layers):
+            self.logger.experiment.add_histogram("layer " + str(i) + " - weights",layer.weight,self.current_epoch)
+            self.logger.experiment.add_histogram("layer " + str(i) + " - bias", layer.bias, self.current_epoch)
+
         return {'log': tensorboard_logs}
 
     # ----- Validation Loop -----

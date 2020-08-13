@@ -7,7 +7,7 @@ from torch import optim
 from torch.utils.data import DataLoader, random_split
 
 
-class BaseModelNew(LightningModule, ABC):
+class BaseModel(LightningModule, ABC):
     def __init__(self, opts):
         # REQUIRED (lightning)
         super().__init__()

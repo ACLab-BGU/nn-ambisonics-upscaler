@@ -4,17 +4,15 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from pytorch_lightning import LightningModule
-from torch import optim
-from torch.utils.data import DataLoader, random_split
 
 from src.data.sig2scm_dataset import Dataset
+from src.models.base_model import BaseModel
 from src.utils import get_data_dir, get_experiments_dir
 from src.utils.complex_tensors import calc_scm
 
 default_opts = {
     # ---folders---
-    "data_path": os.path.join(get_data_dir(), '03082020_free_field'),
+    "data_path": os.path.join(get_data_dir(), 'whitenoise_0_reflections'),
     "logs_path": get_experiments_dir(),
     "experiment_name": 'cnn_free_field',
     # ---data options---
@@ -48,19 +46,10 @@ default_opts = {
 }
 
 
-# noinspection PyAttributeOutsideInit,PyAttributeOutsideInit
-class CNN(LightningModule):
+class CNN(BaseModel):
     def __init__(self, opts):
         # REQUIRED
-        super().__init__()
-
-        # save hyperparameters
-        self.save_hyperparameters(opts)
-
-        # wrap dataset arguments in a dictionary (just for code beauty)
-        self.dataset_args = dict(frequency=self.hparams.frequency, sh_order_sig=self.hparams.sh_order_sig,
-                                 sh_order_scm=self.hparams.sh_order_scm,
-                                 time_len_sig=self.hparams.time_len_sig)
+        super().__init__(opts)
 
         # get input and output sizes
         self._get_input_output_sizes()
@@ -82,24 +71,8 @@ class CNN(LightningModule):
         self.conv_layers = nn.ModuleList(lst)
         self.alpha = nn.Parameter(torch.tensor(0., requires_grad=True))  # logit scaling of residual
 
-        loss_dict = {'mse': lambda x, y: nn.MSELoss()(x, y) * np.prod(x.shape[1:])}
-        self.loss = loss_dict[self.hparams.loss]
-
-    def _get_input_output_sizes(self):
-        # determine the number of channels of the input and output layers from data.
-
-        dataset = Dataset(self.hparams.data_path, train=True, preload=False, **self.dataset_args)
-        x, target = next(iter(dataset))
-        #  input shape should be (2, Q_in, T), target shape should be (2, Q_out, Q_out)
-        assert x.shape[0] == 2, "0 dim (real-imag) of input must be 2"
-        assert target.shape[0] == 2, "0 dim (real-imag) of target must be 2"
-        assert target.shape[1] == target.shape[2], "target must be a stack of square matrices"
-
-        self.hparams.input_channels = x.shape[1] * 2
-        self.hparams.output_channels = target.shape[1] * 2
-
     def forward(self, x):
-        # REQUIRED
+        # REQUIRED (lightning)
 
         # x should be of shape (N, 2, Q_in, T)
         assert x.shape[1] == 2, "1st dim (real-imag) must be 2"
@@ -141,65 +114,34 @@ class CNN(LightningModule):
 
         return x
 
-    def configure_optimizers(self):
-        # REQUIRED
-        optimizer = optim.Adam(self.parameters(), lr=self.hparams.lr)
-        scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer,
-                                                         patience=self.hparams.lr_sched_patience,
-                                                         threshold=self.hparams.lr_sched_thresh, verbose=True)
-        return [optimizer], [scheduler]
+    def _get_dataset_args(self):
+        dataset_args = dict(frequency=self.hparams.frequency, sh_order_sig=self.hparams.sh_order_sig,
+                            sh_order_scm=self.hparams.sh_order_scm, time_len_sig=self.hparams.time_len_sig)
 
-    # ----- Data Loaders -----
+        return dataset_args
 
-    def setup(self, stage):
-        # OPTIONAL
-        frequency = self.hparams.frequency,
+    def _get_dataset_class(self):
+        return Dataset
 
-        # train/val split
-        if stage == 'fit':
-            assert np.sum(self.hparams.train_val_split) == 1, 'invalid split arguments'
-            dataset = Dataset(self.hparams.data_path, train=True, preload=self.hparams.preload_data,
-                              **self.dataset_args)
-            train_size = round(self.hparams.train_val_split[0] * len(dataset))
-            val_size = len(dataset) - train_size
-            self.dataset_train, self.dataset_val = random_split(dataset, [train_size, val_size])
-        elif stage == 'test':
-            self.dataset_test = Dataset(self.hparams.data_path, train=False, preload=self.hparams.preload_data,
-                                        **self.dataset_args)
-        else:
-            raise NotImplementedError
+    def _get_loss(self):
+        loss_dict = {'mse': lambda x, y: nn.MSELoss()(x, y) * np.prod(x.shape[1:])}
+        return loss_dict[self.hparams.loss]
 
-    def train_dataloader(self):
-        # REQUIRED
-        loader = DataLoader(self.dataset_train, batch_size=self.hparams.batch_size,
-                            num_workers=self.hparams.num_workers)
-        return loader
+    def _get_input_output_sizes(self):
+        # determine the number of channels of the input and output layers from data.
 
-    def val_dataloader(self):
-        # OPTIONAL
-        loader = DataLoader(self.dataset_val, batch_size=self.hparams.batch_size, num_workers=self.hparams.num_workers)
-        return loader
+        dataset = Dataset(self.hparams.data_path, train=True, preload=False, **self.dataset_args)
+        x, target = next(iter(dataset))
+        #  input shape should be (2, Q_in, T), target shape should be (2, Q_out, Q_out)
+        assert x.shape[0] == 2, "0 dim (real-imag) of input must be 2"
+        assert target.shape[0] == 2, "0 dim (real-imag) of target must be 2"
+        assert target.shape[1] == target.shape[2], "target must be a stack of square matrices"
 
-    def test_dataloader(self):
-        # OPTIONAL
-        loader = DataLoader(self.dataset_test, batch_size=self.hparams.batch_size, num_workers=self.hparams.num_workers)
-        return loader
-
-    # ----- Training Loop -----
-    def training_step(self, batch, batch_idx):
-        # REQUIRED
-        x, y = batch
-        y_pred = self(x)
-        loss = self.loss(y_pred, y)
-
-        print(f"\nBATCH Train Loss: {loss}")
-
-        return {'loss': loss}
+        self.hparams.input_channels = x.shape[1] * 2
+        self.hparams.output_channels = target.shape[1] * 2
 
     def training_epoch_end(self, outputs):
-        # OPTIONAL
-        avg_loss = torch.stack([x['batch_loss'] for x in outputs]).mean()
-        tensorboard_logs = {'train_loss': avg_loss}
+        results = super().training_epoch_end(outputs)
 
         # TODO: wrap tensorboard stuff more elegantly, in a different function
         for i, layer in enumerate(self.conv_layers):
@@ -207,41 +149,4 @@ class CNN(LightningModule):
             if layer.bias is not None:
                 self.logger.experiment.add_histogram("layer " + str(i) + " - bias", layer.bias, self.current_epoch)
 
-        print(f"\nTrain Loss: {avg_loss}")
-
-        return {'train_loss': avg_loss, 'log': tensorboard_logs}
-
-    # ----- Validation Loop -----
-    def validation_step(self, batch, batch_idx):
-        # OPTIONAL
-        x, y = batch
-        y_pred = self(x)
-        loss = self.loss(y_pred, y)
-
-        return {'val_loss': loss}
-
-    def validation_epoch_end(self, outputs):
-        # OPTIONAL
-        avg_loss = torch.stack([x['val_loss'] for x in outputs]).mean()
-        tensorboard_logs = {'val_loss': avg_loss}
-
-        print(f"\nValidation Loss: {avg_loss}\n")
-
-        return {'val_loss': avg_loss, 'log': tensorboard_logs}
-
-    # ----- Test Loop -----
-    def test_step(self, batch, batch_idx):
-        # OPTIONAL
-        x, y = batch
-        y_pred = self(x)
-        loss = self.loss(y_pred, y)
-
-        return {'test_loss': loss}
-
-    def test_epoch_end(self, outputs):
-        # OPTIONAL
-
-        avg_loss = torch.stack([x['test_loss'] for x in outputs]).mean()
-        tensorboard_logs = {'test_loss': avg_loss}
-
-        return {'test_loss': avg_loss, 'log': tensorboard_logs}
+        return results

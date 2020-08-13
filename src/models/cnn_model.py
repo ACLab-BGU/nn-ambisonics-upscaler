@@ -191,6 +191,8 @@ class CNN(LightningModule):
         y_pred = self(x)
         loss = self.loss(y_pred, y)
 
+        print(f"\nBATCH Train Loss: {loss}")
+
         return {'loss': loss}
 
     def training_epoch_end(self, outputs):
@@ -203,7 +205,9 @@ class CNN(LightningModule):
             self.logger.experiment.add_histogram("layer " + str(i) + " - weights", layer.weight, self.current_epoch)
             self.logger.experiment.add_histogram("layer " + str(i) + " - bias", layer.bias, self.current_epoch)
 
-        return {'log': tensorboard_logs}
+        print(f"\nTrain Loss: {avg_loss}")
+
+        return {'train_loss': avg_loss, 'log': tensorboard_logs}
 
     # ----- Validation Loop -----
     def validation_step(self, batch, batch_idx):
@@ -218,6 +222,8 @@ class CNN(LightningModule):
         # OPTIONAL
         avg_loss = torch.stack([x['val_loss'] for x in outputs]).mean()
         tensorboard_logs = {'val_loss': avg_loss}
+
+        print(f"\nValidation Loss: {avg_loss}\n")
 
         return {'val_loss': avg_loss, 'log': tensorboard_logs}
 

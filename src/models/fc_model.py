@@ -9,6 +9,7 @@ from torch import optim
 from torch.utils.data import DataLoader, random_split
 
 from src.data.base_dataset import BasicDatasetLT
+from src.models.base_model import BaseModel
 from src.utils import get_data_dir, get_experiments_dir
 from src.utils.complex_tensors import get_real_imag_parts, complex_outer_product, cat_real_imag_parts
 
@@ -35,12 +36,84 @@ default_opts = {
     "preload_data": True,
     # ---optimization---
     "lr": 3e-4,
+    "lr_sched_thresh": 0.01,
+    "lr_sched_patience": 10,
     "max_epochs": 1000,
     "gpus": -1
 }
 
+# TODO: implement FC with new Dataset
+class FC(BaseModel):
+    def __init__(self, opts):
+        # REQUIRED
+        super().__init__(opts)
 
-# noinspection PyAttributeOutsideInit,PyAttributeOutsideInit
+        # get input and output sizes
+        self._get_input_output_sizes()
+
+        # define network parameters
+        if np.isscalar(self.hparams.hidden_sizes):
+            self.hparams.hidden_sizes = [self.hparams.hidden_sizes] * self.hparams.hidden_layers
+        sizes = [self.hparams.input_size, *self.hparams.hidden_sizes, self.hparams.last_layer_size]
+        self.linears = nn.ModuleList([nn.Linear(in_size, out_size)
+                                      for in_size, out_size in zip(sizes, sizes[1:])])
+        loss_dict = {'mse': lambda x, y: nn.MSELoss()(x, y) * np.prod(x.shape[1:])}
+        self.loss = loss_dict[self.hparams.loss]
+
+    def forward(self, x):
+        # REQUIRED
+        if self.hparams.residual_only:
+            pad_size = self.hparams.output_shape[-1] - x.shape[-1]
+            x = F.pad(x,(0,pad_size,0,pad_size))
+            raise NotImplementedError()
+            return x
+
+        if self.hparams.residual_flag:
+            x_orig = x.clone()
+
+        x = torch.flatten(x, 1)
+        for layer in self.linears:
+            x = layer(x)
+            if layer != self.linears[-1]:
+                x = F.relu(x)
+
+        # split between full-matrix output OR low-rank output transformed to full matrix
+        if self.hparams.rank is None:
+            x = x.view((x.shape[0], *self.hparams.output_shape))
+        else:
+            x = x.view((x.shape[0],2,self.hparams.output_shape[-1],self.hparams.rank))
+            x = cat_real_imag_parts(*complex_outer_product(get_real_imag_parts(x))) # TODO: wrap 3 functions together, for simpler syntax for outer-product
+
+        if self.hparams.residual_flag:
+            x[:, :, :x_orig.shape[-2], :x_orig.shape[-1]] += x_orig
+
+        return x
+
+    def _get_dataset_args(self):
+        dataset_args = dict(input_sh_order=self.hparams.input_sh_order)
+
+        return dataset_args
+
+    def _get_dataset_class(self):
+        return BasicDatasetLT
+
+    def _get_loss(self):
+        loss_dict = {'mse': lambda x, y: nn.MSELoss()(x, y) * np.prod(x.shape[1:])}
+        return loss_dict[self.hparams.loss]
+
+    def _get_input_output_sizes(self):
+        # automatically get the input and output sizes
+        # (values are casted into normal ints, to beautify the yaml format)
+        dataset = BasicDatasetLT(self.hparams.data_path, train=True, preload=False, input_sh_order=self.hparams.input_sh_order)
+        input,target = next(iter(dataset))
+        self.hparams.input_size = np.prod(input.shape).tolist()
+        self.hparams.output_shape = list(target.shape)
+        if self.hparams.rank is None:
+            self.hparams.last_layer_size = np.prod(self.hparams.output_shape).tolist()
+        else:
+            self.hparams.last_layer_size = np.prod((2,self.hparams.output_shape[-1],self.hparams.rank)).tolist()
+
+# Delete this class (BaseModelLT)
 class BaseModelLT(LightningModule):
     def __init__(self, opts):
         # REQUIRED

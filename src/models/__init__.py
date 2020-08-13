@@ -3,7 +3,7 @@ from src.models import fc_model, cnn_model
 
 def find_model_using_name(model_name):
     if model_name == 'fc':
-        model = fc_model.BaseModelLT
+        model = fc_model.FC
         default_opts = fc_model.default_opts
     elif model_name == 'cnn':
         model = cnn_model.CNN

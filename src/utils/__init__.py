@@ -35,7 +35,6 @@ def prepare_trainer(opts, logger=None):
     return trainer
 
 
-# TODO: implement additional trainer arguments, especially "resume_from_checkpoint"
 
 """
 Additional Trainer args:

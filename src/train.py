@@ -15,7 +15,7 @@ def train(opts):
     trainer = prepare_trainer(full_opts, logger)
 
     trainer.fit(model)
-
+    return model
 
 if __name__ == '__main__':
     assert len(sys.argv) > 1, "Please insert a config file to run"

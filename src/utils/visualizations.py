@@ -4,9 +4,9 @@ from typing import Union
 import matplotlib.pyplot as plt
 import numpy as np
 
+
 # from src.utils.sphere import sh
 # from src.utils.sphere.sh import Q2N
-from src.utils.sphere import sh
 
 
 def covariance_matrix(mat, ax=None, add_order_lines=True):
@@ -38,13 +38,12 @@ def add_sh_order_lines(ax: plt.Axes, order=None, args_dict=None, x_flag=True, y_
             ax.axhline(loc, color='red', **args_dict)
 
 
-def power_map(cov: np.ndarray, points=5000, db=True, dynamic_range_db: Union[float, None] = 50., ax: plt.Axes = None):
+def power_map(cov: np.ndarray, points=5000, db=True, dynamic_range_db: Union[float, None] = 50., ax: plt.Axes = None, approx_nearest_PSD=False):
     from src.utils.sphere.sampling_schemes import grid
-    from src.utils.sphere.sh import mat as shmat
+    from src.utils.sphere.sh import power_map as calc_power_map
 
     omega = grid(points, output_type='all_combs_2d', phi_zero_center=True)  # (2, X, Y)
-    from src.utils.sphere.sh import power_map as calc_power_map
-    power = calc_power_map(cov, omega)
+    power = calc_power_map(cov, omega, approx_nearest_PSD=approx_nearest_PSD)
     if db:
         power = 10*np.log10(power)
 
@@ -70,22 +69,30 @@ def power_map(cov: np.ndarray, points=5000, db=True, dynamic_range_db: Union[flo
     return im
 
 
-def compare_covs(input, output, expected, normalize_diff=False) -> plt.Figure:
+def compare_covs(input, output, expected, elementwise_normalization=False) -> plt.Figure:
     Q_in = input.shape[0]
     Q_out = output.shape[0]
-    mats = [input, output, expected, output[:Q_in, :Q_in]-input]
-    if normalize_diff:
+    expected_norm = np.linalg.norm(expected, 'fro')
+    output = output/expected_norm
+    input = input/expected_norm
+    expected = expected/expected_norm
+
+    mats = [input, output, expected, output-expected]
+    loss = np.linalg.norm(mats[-1], 'fro')
+    if elementwise_normalization:
         mats[3] /= input
 
     fig, axes = plt.subplots(2, 2)
     im = []
     for i, (ax, mat, title) in enumerate(zip(axes.flat,
                               mats,
-                              ["input", "output", "expected", "output truncated - input"])):
+                              ["input", "output", "expected", "output - expected"])):
         im.append(covariance_matrix(mat, ax))
         ax.set_title(title)
 
-    if normalize_diff:
+    fig.suptitle(f"RMSE = {loss}")
+
+    if elementwise_normalization:
         common_clim(im[:-1])
     else:
         common_clim(im)
@@ -102,7 +109,7 @@ def compare_power_maps(input, output, expected) -> plt.Figure:
     for ax, mat, title in zip(axes.flat,
                               [input, output, expected, output[:Q_in, :Q_in]],
                               ["input", "output", "expected", "output truncated"]):
-        im.append(power_map(mat, ax=ax))
+        im.append(power_map(mat, ax=ax, approx_nearest_PSD=True))
         ax.set_title(title)
     common_clim([im[0], im[3]])
     common_clim([im[1], im[2]])
@@ -111,7 +118,7 @@ def compare_power_maps(input, output, expected) -> plt.Figure:
     for ax, mat, title in zip(axes.flatten()[4:],
                               [output - expected, output[:Q_in, :Q_in]-input],
                               ["output-expected", "output truncated - input"]):
-        im.append(power_map(mat, ax=ax, db=False))
+        im.append(power_map(mat, ax=ax, db=False, approx_nearest_PSD=False))
         ax.set_title(title)
 
     fig.show()

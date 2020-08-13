@@ -44,10 +44,14 @@ def Q2N(Q):
     return (np.sqrt(Q)-1).astype(int).tolist()
 
 
-def power_map(cov, omega) -> np.ndarray:
+def power_map(cov, omega, approx_nearest_PSD=False) -> np.ndarray:
     Q, Q1 = cov.shape
     assert Q == Q1
     order = Q2N(Q)
+
+    if approx_nearest_PSD:
+        from src.utils.linear_algebra import find_nearest_PSD_mat
+        cov = find_nearest_PSD_mat(cov)
 
     Y = mat(order, omega.reshape((2, -1)))  # (XY, Q)
     power = np.sum((Y @ cov) * Y.conj(), axis=1)

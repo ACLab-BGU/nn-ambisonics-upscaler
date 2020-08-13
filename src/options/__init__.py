@@ -85,7 +85,8 @@ def validate_opts(opts, print_flag=True):
     # check that all fields are legal
     default_opts = get_default_opts(opts)
     for key in opts.keys():
-        assert key in default_opts.keys(), f"parameter {key} in opts is not valid"
+        if not key == "port":
+            assert key in default_opts.keys(), f"parameter {key} in opts is not valid"
 
     # GPU
     if (not torch.cuda.is_available()) and opts['gpus'] != 0:

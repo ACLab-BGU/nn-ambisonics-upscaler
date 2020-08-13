@@ -21,6 +21,7 @@ default_opts = {
     "frequency": 1000.,
     # ---network structure---
     "model_name": 'cnn',
+    "bias": True,
     "hidden_layers": 2,
     "kernel_widths": [1, 2, 3],
     "strides": [1, 1, 1],
@@ -76,7 +77,7 @@ class CNN(LightningModule):
         lst = []
         zipped = zip(channels, channels[1:], self.hparams.kernel_widths, self.hparams.strides)
         for channels_in, channels_out, kernel_size, stride in zipped:
-            lst.append(nn.Conv1d(channels_in, channels_out, kernel_size, stride))
+            lst.append(nn.Conv1d(channels_in, channels_out, kernel_size, stride, bias=self.hparams.bias))
 
         self.conv_layers = nn.ModuleList(lst)
         self.alpha = nn.Parameter(torch.tensor(0., requires_grad=True))  # logit scaling of residual
@@ -203,7 +204,8 @@ class CNN(LightningModule):
         # TODO: wrap tensorboard stuff more elegantly, in a different function
         for i, layer in enumerate(self.conv_layers):
             self.logger.experiment.add_histogram("layer " + str(i) + " - weights", layer.weight, self.current_epoch)
-            self.logger.experiment.add_histogram("layer " + str(i) + " - bias", layer.bias, self.current_epoch)
+            if layer.bias is not None:
+                self.logger.experiment.add_histogram("layer " + str(i) + " - bias", layer.bias, self.current_epoch)
 
         print(f"\nTrain Loss: {avg_loss}")
 

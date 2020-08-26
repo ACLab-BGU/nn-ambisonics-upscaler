@@ -106,7 +106,7 @@ def validate_opts(opts, print_flag=True):
 
     # check that all fields are legal
     default_opts = get_default_opts(opts)
-    valid_keys = default_opts.keys() + trainer_optional_arguments + misc_arguments
+    valid_keys = list(default_opts.keys()) + trainer_optional_arguments + misc_arguments
     for key in opts.keys():
         assert key in valid_keys, f"parameter {key} in opts is not valid"
 

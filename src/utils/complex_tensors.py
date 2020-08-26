@@ -1,5 +1,6 @@
 import numpy as np
 import torch
+from torch import nn
 
 
 def l2_sq_complex(x) -> torch.Tensor:
@@ -76,3 +77,18 @@ def calc_scm(x, smoothing_dim, channels_dim, real_imag_dim, batch_dim):
     R = torch.zeros((N, 2, Q, Q), device=x.device) # make sure R is on the same device
     R[:, 0, :, :], R[:, 1, :, :] = complex_outer_product((x[0], x[1]))
     return R/T
+
+
+class ComplexConv1d(nn.Module):
+    def __init__(self, **kwargs):
+        super().__init__()
+
+        ## Model components
+        self.conv_re = nn.Conv1d(**kwargs)
+        self.conv_im = nn.Conv1d(**kwargs)
+
+    def forward(self, x):  # shape of x : [batch,2,channel,time]
+        real = self.conv_re(x[:, 0]) - self.conv_im(x[:, 1])
+        imaginary = self.conv_re(x[:, 1]) + self.conv_im(x[:, 0])
+        output = torch.stack((real, imaginary), dim=1)
+        return output

@@ -1,20 +1,46 @@
+# %%
+import torch
+
 from src.train import train
 
-hidden_layers = 1
-train({"model_name":"cnn",
-       "data_path": "/Users/ranweisman/PycharmProjects/nn-ambisonics-upscaler/data/whitenoise_0_reflections",
-       "experiment_name": "deleteme",
-       "max_epochs": 1000,
-       "num_workers": 15,
-       "lr": 0.001,
-       "lr_sched_patience": 5,
-       "lr_sched_thresh": 0.1,
-       "hidden_layers": hidden_layers,
-       "kernel_widths": [1]*(hidden_layers+1),
-       "strides": [1]*(hidden_layers+1),
-       "hidden_channels": [500],
-       "sh_order_sig": 3,
-       "sh_order_scm": 4,
-       "residual_flag": False,
-       "force_residual": True,
-       })
+# %%
+hidden_layers = 0
+model = train({"model_name": "cnn",
+               "data_path": r"/Users/tomshlomo/PycharmProjects/nn-ambisonics-upscaler2/data/whitenoise_inf_reflections",
+               "experiment_name": "0_to_0_hiddens_0_kernel_1_no_res_10_refs",
+               "max_epochs": 2,
+               "num_workers": 0,
+               "lr": 0.1,
+               "lr_sched_patience": 3,
+               "lr_sched_thresh": 0.1,
+               "hidden_layers": hidden_layers,
+               "kernel_widths": [1] * (hidden_layers + 1),
+               "strides": [1] * (hidden_layers + 1),
+               "hidden_channels": [],
+               "sh_order_sig": 0,
+               "sh_order_scm": 0,
+               "gpus": 0,
+               "residual_flag": False,
+               "bias": False,
+               "complex_conv": True,
+               "fast_dev_run": True,
+               })
+
+# %%
+print(model.conv_layers[0].weight[0, :, 0])
+print(model.conv_layers[0].weight[1, :, 0])
+print(model.conv_layers[0].bias)
+
+U = model.conv_layers[0].weight[:, :, 0].detach().numpy()
+print(U @ U.T)
+
+#%%
+x, y = next(iter(model.train_dataloader()))
+
+#%%
+# x should be of shape (N, 2, Q_in, T)
+N = 1
+Q_in = 1
+T = 100
+x = torch.ones((N, 2, Q_in, T))
+y = model(x)

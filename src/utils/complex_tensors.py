@@ -92,3 +92,13 @@ class ComplexConv1d(nn.Module):
         imaginary = self.conv_re(x[:, 1]) + self.conv_im(x[:, 0])
         output = torch.stack((real, imaginary), dim=1)
         return output
+
+    @property
+    def weight(self):
+        return torch.stack((self.conv_re.weight, self.conv_im.weight), dim=0)
+
+    @property
+    def bias(self):
+        if self.conv_re.bias is None:
+            return None
+        return torch.stack((self.conv_re.bias, self.conv_im.bias), dim=0)

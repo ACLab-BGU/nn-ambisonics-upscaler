@@ -71,7 +71,7 @@ class CNN(BaseModel):
                 conv_layer = ComplexConv1d
             else:
                 conv_layer = nn.Conv1d
-            lst.append(conv_layer(channels_in, channels_out, kernel_size, stride, bias=self.hparams.bias))
+            lst.append(conv_layer(in_channels=channels_in, out_channels=channels_out, kernel_size=kernel_size, stride=stride, bias=self.hparams.bias))
 
         self.conv_layers = nn.ModuleList(lst)
         self.alpha = nn.Parameter(torch.tensor(0., requires_grad=True))  # logit scaling of residual
@@ -144,8 +144,8 @@ class CNN(BaseModel):
         assert target.shape[0] == 2, "0 dim (real-imag) of target must be 2"
         assert target.shape[1] == target.shape[2], "target must be a stack of square matrices"
 
-        self.hparams.input_channels = x.shape[1] * 2
-        self.hparams.output_channels = target.shape[1] * 2
+        self.hparams.input_channels = x.shape[1] * (1 if self.hparams.complex_conv else 2)
+        self.hparams.output_channels = target.shape[1] * (1 if self.hparams.complex_conv else 2)
 
     def training_epoch_end(self, outputs):
         results = super().training_epoch_end(outputs)

@@ -8,7 +8,7 @@ import torch.nn.functional as F
 from src.data.sig2scm_dataset import Dataset
 from src.models.base_model import BaseModel
 from src.utils import get_data_dir, get_experiments_dir
-from src.utils.complex_tensors import calc_scm
+from src.utils.complex_tensors import calc_scm, ComplexConv1d
 
 default_opts = {
     # ---folders---
@@ -19,6 +19,7 @@ default_opts = {
     "frequency": 1000.,
     # ---network structure---
     "model_name": 'cnn',
+    "complex_conv": True,
     "bias": True,
     "hidden_layers": 2,
     "kernel_widths": [1, 2, 3],
@@ -66,7 +67,11 @@ class CNN(BaseModel):
         lst = []
         zipped = zip(channels, channels[1:], self.hparams.kernel_widths, self.hparams.strides)
         for channels_in, channels_out, kernel_size, stride in zipped:
-            lst.append(nn.Conv1d(channels_in, channels_out, kernel_size, stride, bias=self.hparams.bias))
+            if self.hparams.complex_conv:
+                conv_layer = ComplexConv1d
+            else:
+                conv_layer = nn.Conv1d
+            lst.append(conv_layer(channels_in, channels_out, kernel_size, stride, bias=self.hparams.bias))
 
         self.conv_layers = nn.ModuleList(lst)
         self.alpha = nn.Parameter(torch.tensor(0., requires_grad=True))  # logit scaling of residual
@@ -84,7 +89,8 @@ class CNN(BaseModel):
         if self.hparams.residual_flag:
             low_order_scm = calc_scm(x, smoothing_dim=3, channels_dim=2, real_imag_dim=1, batch_dim=0)
 
-        x = x.view((N, 2 * Q_in, T))
+        if not self.hparams.complex_conv:
+            x = x.view((N, 2 * Q_in, T))
 
         # apply convolutional layers
         for layer in self.conv_layers:
@@ -92,11 +98,12 @@ class CNN(BaseModel):
             if layer != self.conv_layers[-1]:  # no activation at last layer
                 x = F.relu(x)
 
-        #  x should now be of shape (N, 2*Q_out, T).
-        #  Reshape to (N, 2, Q_out, T) before applying time smoothing
-        Q_out = x.shape[1] // 2
-        T = x.shape[2]
-        x = x.view((N, 2, Q_out, T))
+        if not self.hparams.complex_conv:
+            #  x should now be of shape (N, 2*Q_out, T).
+            #  Reshape to (N, 2, Q_out, T) before applying time smoothing
+            Q_out = x.shape[1] // 2
+            T = x.shape[2]
+            x = x.view((N, 2, Q_out, T))
 
         # calculate SCM using time smoothing
         x = calc_scm(x, smoothing_dim=3, channels_dim=2, real_imag_dim=1, batch_dim=0)

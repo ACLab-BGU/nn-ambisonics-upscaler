@@ -11,6 +11,28 @@ import numpy as np
 
 from src.models import find_model_using_name
 
+trainer_optional_arguments = ['max_epochs', 'gpus', 'fast_dev_run', 'overfit_batches', 'limit_train_batches',
+                              'progress_bar_refresh_rate', 'auto_lr_find', 'check_val_every_n_epoch',
+                              'val_check_interval',
+                              'log_save_interval', 'row_log_interval', 'resume_from_checkpoint']
+
+misc_arguments = ['port']
+
+"""
+Additional Trainer args:
+fast_dev_run = false (for debugging)
+overfit_batches=0.01 (overfit over small datasets)
+limit_train_batches=0.1, limit_val_batches=0.01, limit_test_batches=0.01 (use less data, to make epochs shorter)
+progress_bar_refresh_rate (How often to refresh progress bar (in steps). Value 0 disables progress bar)
+auto_lr_find (activate an algorithm to auto-find the learning rate)
+
+check_val_every_n_epoch (Check val every n train epochs)
+val_check_interval (How often within one training epoch to check the validation set)
+log_save_interval (Writes logs to disk this often)
+row_log_interval (How often to add logging rows (does not write to disk)
+resume_from_checkpoint (to resume training from a specific checkpoint pass in the path here. This can be a URL.)
+"""
+
 
 class EasyDict(dict):
     def __init__(self, *args, **kwargs): super().__init__(*args, **kwargs)
@@ -84,9 +106,9 @@ def validate_opts(opts, print_flag=True):
 
     # check that all fields are legal
     default_opts = get_default_opts(opts)
+    valid_keys = default_opts.keys() + trainer_optional_arguments + misc_arguments
     for key in opts.keys():
-        if not key == "port":
-            assert key in default_opts.keys(), f"parameter {key} in opts is not valid"
+        assert key in valid_keys, f"parameter {key} in opts is not valid"
 
     # GPU
     if (not torch.cuda.is_available()) and opts['gpus'] != 0:

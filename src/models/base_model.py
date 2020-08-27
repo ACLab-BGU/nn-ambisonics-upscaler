@@ -91,7 +91,7 @@ class BaseModel(LightningModule, ABC):
         y_pred = self(x)
         loss = self.loss(y_pred, y)
 
-        print(f"\nBATCH Train Loss: {loss}")
+        # print(f"\nBATCH Train Loss: {loss}")
 
         return {'loss': loss}
 

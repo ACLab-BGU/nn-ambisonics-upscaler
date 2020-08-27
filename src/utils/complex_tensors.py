@@ -68,15 +68,23 @@ def complextorch2numpy(x, dim=0):
     return x
 
 
+def numpy2complextorch(x, dim=0):
+    # convert a complex numpy array to a complex torch-tensor/numpy-array
+    # x - the numpy array
+    # dim - the dimension to put the real/imag parts
+    assert type(x) == np.ndarray, "input must be a numpy array"
+    return torch.stack([torch.from_numpy(np.real(x)), torch.from_numpy(np.imag(x))], dim=dim)
+
+
 def calc_scm(x, smoothing_dim, channels_dim, real_imag_dim, batch_dim):
     T = x.shape[smoothing_dim]
     Q = x.shape[channels_dim]
     N = x.shape[batch_dim]
 
     x = x.permute(real_imag_dim, batch_dim, channels_dim, smoothing_dim)
-    R = torch.zeros((N, 2, Q, Q), device=x.device) # make sure R is on the same device
+    R = torch.zeros((N, 2, Q, Q), device=x.device)  # make sure R is on the same device
     R[:, 0, :, :], R[:, 1, :, :] = complex_outer_product((x[0], x[1]))
-    return R/T
+    return R / T
 
 
 class ComplexConv1d(nn.Module):

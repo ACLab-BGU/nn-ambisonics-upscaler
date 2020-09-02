@@ -6,8 +6,8 @@ from src.train import train
 # %%
 hidden_layers = 2
 model = train({"model_name": "cnn",
-               "data_path": r"/Users/tomshlomo/PycharmProjects/nn-ambisonics-upscaler2/data/whitenoise_inf_reflections",
-               "experiment_name": "3_to_4_hiddens_conv2_kernel_20,1_channels_500_with_res_10_refs",
+               "data_path": r"../../data/whitenoise_10_reflections",
+               "experiment_name": "3_to_4_hiddens_2_conv2_kernel_20,1_channels_100_with_res_10_refs",
                "max_epochs": 1000,
                "num_workers": 8,
                "lr": 0.01,

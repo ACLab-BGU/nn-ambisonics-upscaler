@@ -85,9 +85,9 @@ class CNN(BaseModel):
         x = self.sig2sig_block(x)
         num_freqs = x.shape[-2]
         # self.freq_weights = torch.ones(F)
-        self.freq_weights = torch.zeros(num_freqs, device=self._device)
-        self.freq_weights[num_freqs//2] = 1.
         if num_freqs > 1:
+            self.freq_weights = torch.zeros(num_freqs, device=self.device)
+            self.freq_weights[num_freqs // 2] = 1.
             self.freq_weights = nn.Parameter(self.freq_weights, requires_grad=True)
 
         self.alpha = nn.Parameter(torch.tensor(0., requires_grad=True))  # logit scaling of residual
@@ -135,7 +135,10 @@ class CNN(BaseModel):
         x = self.sig2sig_block(x)
         # x should be no of size (N, 2, Q_out, F, T)
 
-        x = torch.tensordot(x, self.freq_weights, dims=([3], [0]))
+        if x.shape[3]>1:
+            x = torch.tensordot(x, self.freq_weights, dims=([3], [0]))
+        else:
+            x = x[:,:,:,0,:]
         # x should now be of size (N, 2, Q_out, T)
 
         # calculate SCM using time smoothing

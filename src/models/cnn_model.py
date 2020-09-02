@@ -95,11 +95,11 @@ class CNN(BaseModel):
     def sig2sig_block(self, x):
         # x should be of shape (N, 2, Q_in, F, T)
 
-        N, _, Q_in, F, T = x.shape
+        N, _, Q_in, num_freqs, T = x.shape
         assert x.shape[1] == 2, "1st dim (real-imag) must be 2"
 
         if not self.hparams.complex_conv:
-            x = x.view((N, 2 * Q_in, F, T))
+            x = x.view((N, 2 * Q_in, num_freqs, T))
 
         # apply convolutional layers
         for layer in self.conv_layers:
@@ -111,8 +111,9 @@ class CNN(BaseModel):
             #  x should now be of shape (N, 2*Q_out, F, T).
             #  Reshape to (N, 2, Q_out, F, T) before applying time smoothing
             Q_out = x.shape[1] // 2
-            T = x.shape[2]
-            x = x.view((N, 2, Q_out, F, T))
+            T = x.shape[3]
+            num_freqs = x.shape[2]
+            x = x.view((N, 2, Q_out, num_freqs, T))
 
         return x
 

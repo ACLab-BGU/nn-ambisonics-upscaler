@@ -42,23 +42,29 @@ def select_orders_and_time(d, sh_order_sig, sh_order_scm, time_len_sig):
     ''' takes the loaded data in a dictionary d, and process it so only selected
     SH orders of signal and SCM, and desired time length of the signals, are saved'''
 
+    # preliminaries
     L_sig = (sh_order_sig + 1) ** 2
     L_scm = (sh_order_scm + 1) ** 2
     samples = (time_len_sig * d['fs'])
 
+    # inf cases + make sure the requested orders/samples are not too high
     if L_sig == np.inf:
         L_sig = None
     else:
         L_sig = int(L_sig)
+        assert L_sig <= d['anm'].shape[1], "Requested anm order is too high"
     if L_scm == np.inf:
         L_scm = None
     else:
         L_scm = int(L_scm)
+        assert L_scm <= d['R'].shape[1], "Requested SCM order is too high"
     if samples == np.inf:
         samples = None
     else:
         samples = int(samples)
+        assert samples <= d['anm'].shape[0], "Requested number of time samples is too large"
 
+    # filter indices
     d['anm'] = d['anm'][:samples, :L_sig]
     d['R'] = d['R'][:, :L_scm, :L_scm]
 

@@ -83,11 +83,11 @@ class CNN(BaseModel):
         # apply sig2sig block to obtain the number of frequencies after all the conv layers
         x = torch.zeros((1, *self.input_shape))
         x = self.sig2sig_block(x)
-        F = x.shape[-2]
+        num_freqs = x.shape[-2]
         # self.freq_weights = torch.ones(F)
-        self.freq_weights = torch.zeros(F)
-        self.freq_weights[F//2] = 1.
-        if F > 1:
+        self.freq_weights = torch.zeros(num_freqs, device=self.device)
+        self.freq_weights[num_freqs//2] = 1.
+        if num_freqs > 1:
             self.freq_weights = nn.Parameter(self.freq_weights, requires_grad=True)
 
         self.alpha = nn.Parameter(torch.tensor(0., requires_grad=True))  # logit scaling of residual

@@ -1,12 +1,16 @@
 # %%
+import os
+
 import torch
 
 from src.train import train
 
 # %%
+from src.utils import get_data_dir
+
 hidden_layers = 2
 model = train({"model_name": "cnn",
-               "data_path": r"../../data/whitenoise_10_reflections",
+               "data_path": os.path.join(get_data_dir(), "whitenoise_10_reflections"),
                "experiment_name": "3_to_4_hiddens_2_conv2_kernel_20,1_channels_100_with_res_10_refs",
                "max_epochs": 1000,
                "num_workers": 8,

@@ -114,6 +114,8 @@ class Dataset(data.Dataset):
             root = os.path.join(root, 'train')
         else:
             root = os.path.join(root, 'test')
+        print("Absolute path of data folder:")
+        print(os.path.abspath(root))
         self.filenames = glob.glob(os.path.join(root, '*.mat'))  # get list of all mat files in the root folder
         assert len(self.filenames) > 0, 'data folder is empty'
         self.len = len(self.filenames)

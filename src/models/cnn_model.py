@@ -85,7 +85,7 @@ class CNN(BaseModel):
         x = self.sig2sig_block(x)
         num_freqs = x.shape[-2]
         # self.freq_weights = torch.ones(F)
-        self.freq_weights = torch.zeros(num_freqs, device=self.device)
+        self.freq_weights = torch.zeros(num_freqs, device=self._device)
         self.freq_weights[num_freqs//2] = 1.
         if num_freqs > 1:
             self.freq_weights = nn.Parameter(self.freq_weights, requires_grad=True)

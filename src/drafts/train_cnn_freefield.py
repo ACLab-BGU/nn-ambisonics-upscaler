@@ -8,27 +8,27 @@ from src.train import train
 # %%
 from src.utils import get_data_dir
 
-hidden_layers = 2
+hidden_layers = 4
 model = train({"model_name": "cnn",
                "data_path": os.path.join(get_data_dir(), "whitenoise_10_reflections"),
-               "experiment_name": "3_to_4_hiddens_2_conv2_kernel_20,1_channels_100_with_res_10_refs",
-               "max_epochs": 1000,
+               "experiment_name": "3_to_4_conv2d_10_refs",
+               "max_epochs": 15,
                "num_workers": 8,
                "lr": 0.01,
                "lr_sched_patience": 3,
                "lr_sched_thresh": 0.1,
                "hidden_layers": hidden_layers,
-               "kernel_widths": [(1, 1)] * (hidden_layers + 1),
+               "kernel_widths": [(10, 1)] * (hidden_layers + 1),
                "strides": [(1, 1)] * (hidden_layers + 1),
-               "hidden_channels": [100, 100],
+               "hidden_channels": [20]*hidden_layers,
                "sh_order_sig": 3,
                "sh_order_scm": 4,
                "gpus": -1,
                "residual_flag": True,
                "bias": True,
-               "complex_conv": False,
+               "complex_conv": True,
                "fast_dev_run": False,
-               "bandwidth": 0,
+               "bandwidth": 2000,
                })
 #
 # # %%

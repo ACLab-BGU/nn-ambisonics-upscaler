@@ -8,7 +8,7 @@ from src.train import train
 # %%
 from src.utils import get_data_dir
 
-hidden_layers = 4
+hidden_layers = 3
 model = train({"model_name": "cnn",
                "data_path": os.path.join(get_data_dir(), "whitenoise_10_reflections"),
                "experiment_name": "3_to_4_conv2d_10_refs",
@@ -20,7 +20,7 @@ model = train({"model_name": "cnn",
                "hidden_layers": hidden_layers,
                "kernel_widths": [(10, 1)] * (hidden_layers + 1),
                "strides": [(1, 1)] * (hidden_layers + 1),
-               "hidden_channels": [20]*hidden_layers,
+               "hidden_channels": [200]*hidden_layers,
                "sh_order_sig": 3,
                "sh_order_scm": 4,
                "gpus": -1,

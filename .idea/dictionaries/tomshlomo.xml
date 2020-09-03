@@ -11,8 +11,11 @@
       <w>logit</w>
       <w>narrowband</w>
       <w>nfft</w>
+      <w>sched</w>
       <w>stft</w>
+      <w>tensorboard</w>
       <w>tensordot</w>
+      <w>whitenoise</w>
     </words>
   </dictionary>
 </component>

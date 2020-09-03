@@ -8,7 +8,7 @@ import torch.nn.functional as F
 from src.data.sig2scm_dataset import Dataset
 from src.models.base_model import BaseModel
 from src.utils import get_data_dir, get_experiments_dir
-from src.utils.complex_tensors import calc_scm, ComplexConv1d, ComplexConv2d
+from src.utils.complex_tensors import calc_scm, ComplexConv2d
 
 default_opts = {
     # ---folders---
@@ -123,22 +123,22 @@ class CNN(BaseModel):
         # x should be of shape (N, 2, Q_in, F, T)
         assert x.shape[1] == 2, "1st dim (real-imag) must be 2"
 
-        N, _, Q_in, F, T = x.shape
+        N, _, Q_in, num_freqs, T = x.shape
         low_order_scm = None
 
         # merge real/imag channels to a single axis
         if self.hparams.residual_flag:
-            center_bin = F//2
+            center_bin = num_freqs//2
             low_order_scm = calc_scm(x[:, :, :, center_bin, :],
                                      smoothing_dim=3, channels_dim=2, real_imag_dim=1, batch_dim=0)
 
         x = self.sig2sig_block(x)
         # x should be no of size (N, 2, Q_out, F, T)
 
-        if x.shape[3]>1:
+        if x.shape[3] > 1:
             x = torch.tensordot(x, self.freq_weights, dims=([3], [0]))
         else:
-            x = x[:,:,:,0,:]
+            x = x[:, :, :, 0, :]
         # x should now be of size (N, 2, Q_out, T)
 
         # calculate SCM using time smoothing

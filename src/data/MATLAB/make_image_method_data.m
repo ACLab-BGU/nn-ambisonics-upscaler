@@ -57,6 +57,7 @@ for i=start_index:num_of_files
     is_real_sh = opts.real_sh;
     num_of_reflections = opts.number_of_reflections;
     vars = {"R", "fs", "freq", "seed", "nfft", "R_scaling", "N_R", "is_real_sh", "num_of_reflections"}; %#ok<CLARRSTR>
+    
     %% signals
     if opts.output_signals
         anm = anm(:, 1:(opts.signal_order_to_save+1)^2);
@@ -67,7 +68,7 @@ for i=start_index:num_of_files
         N_signals = opts.signal_order_to_save;
         vars = [vars, {"anm", "anm_scaling", "N_signals"}]; %#ok<AGROW>
     end
-
+    
     %% file path
     file_path(i) = fullfile(opts.folder_path, sprintf("%08d.mat", i));
     save(file_path(i), vars{:});

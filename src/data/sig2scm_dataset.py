@@ -5,7 +5,7 @@ import numpy as np
 import torch
 import torch.utils.data as data
 
-from src.data.matlab_loaders import load_mat_file
+from src.data import load_data_file
 from src.utils.audio import torch_stft_nd
 
 
@@ -24,7 +24,7 @@ def get_narrowband_signal(x, nfft, freq_bin):
 
 def load_single_freq(file, freq, cache=None, sh_order_sig=float("inf"), sh_order_scm=float("inf"),
                      time_len_sig=float("inf")):
-    d, cache = load_mat_file(file, cache)
+    d, cache = load_data_file(file, cache)
     d = select_orders_and_time(d, sh_order_sig=sh_order_sig, sh_order_scm=sh_order_scm, time_len_sig=time_len_sig)
     freq_bin = np.argmin(np.abs(d['freq'] - freq))
     x = get_narrowband_signal(d['anm'], d['nfft'], freq_bin)
@@ -85,7 +85,7 @@ class Dataset(data.Dataset):
             root = os.path.join(root, 'train')
         else:
             root = os.path.join(root, 'test')
-        self.filenames = glob.glob(os.path.join(root, '*.mat'))  # get list of all mat files in the root folder
+        self.filenames = glob.glob(os.path.join(root, '*.*'))  # get list of all mat files in the root folder
         assert len(self.filenames) > 0, 'data folder is empty'
         self.len = len(self.filenames)
 

@@ -20,6 +20,7 @@ arguments
     opts.real_sh (1,1) logical = true
     opts.target_sh_order = 6
     opts.vec_covs (1,1) logical = true
+    opts.compact_cov (1,1) logical = true
 end
 
 file_path = strings(num_of_files,1);
@@ -40,16 +41,20 @@ for i=start_index:num_of_files
     %% calculate matrices
     [R, freq] = calculate_narrowband_scm(anm, fs, "NFFT", opts.nfft, "stft_window", hann(opts.nfft));
     F = size(R, 3);
-    R_complex = R;
-    if opts.vec_covs
-        R = zeros( Q^2, F );
-        for f=1:F
-            R(:,f) = vec_hermitian_matrix(R_complex(:,:,f), 1);
+    if opts.compact_cov
+        R_complex = R;
+        if opts.vec_covs
+            R = zeros( Q^2, F );
+            for f=1:F
+                R(:,f) = vec_hermitian_matrix(R_complex(:,:,f), 1);
+            end
+        else
+            R = zeros(Q, Q, 2, F);
+            R(:,:,1,:) = real(R_complex);
+            R(:,:,2,:) = imag(R_complex);
         end
     else
-        R = zeros(Q, Q, 2, F);
-        R(:,:,1,:) = real(R_complex);
-        R(:,:,2,:) = imag(R_complex);
+        R = permute(R,[3,1,2]);
     end
     [R, R_scaling] = cast_to(R, opts.R_dtype, 1);
     seed = i; %#ok<NASGU>

@@ -12,7 +12,9 @@ from scipy import io as sio
 
 num_of_reflections = [10]
 source_type = ["whitenoise"]  # whitenoise/speech
-num_of_files = 2
+num_of_files = 5
+sig_length = 0.5
+target_sh_order = 5
 path_data = os.path.join("..", "..", "data")
 output_format = "mat"  # pickle/mat/npz
 
@@ -32,7 +34,7 @@ def gen_data(num_of_reflections, source_type, num_of_files, path_data, output_fo
 
             # generate file with matlab and save to mat file
             eng.make_image_method_data(num_of_files, 1, "folder_path", folder_path, "number_of_reflections", refs,
-                                       "source_type", sig)
+                                       "source_type", sig, "duration", sig_length, "target_sh_order", target_sh_order)
 
             # convert files to a better format
             # TODO: check more efficient alternatives, instead of saving mat files and then converting

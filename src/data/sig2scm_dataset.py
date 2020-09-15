@@ -35,26 +35,8 @@ def get_narrowband_signal(x, nfft, freq_bin):
     return x.permute((2, 0, 1))
 
 
-def load_single_freq(file, freq, cache=None, sh_order_sig=float("inf"), sh_order_scm=float("inf"),
-                     time_len_sig=float("inf")):
-    d, cache = load_data_file(file, cache)
-    d = select_orders_and_time(d, sh_order_sig=sh_order_sig, sh_order_scm=sh_order_scm, time_len_sig=time_len_sig)
-    freq_bin = np.argmin(np.abs(d['freq'] - freq))
-    x = get_narrowband_signal(d['anm'], d['nfft'], freq_bin)
-    # x is of shape (real/imag, channels, time)
-
-    y = d['R'][freq_bin]
-    # y is now a  complex numpy array. convert to a real torch.tensor
-    y = torch.stack([torch.from_numpy(np.real(y)), torch.from_numpy(np.imag(y))])
-
-    # y is now of show (2, channels_out, channels_out)
-    return x, y, cache
-
-
-def load_stft_slice(file, center_freq_hz, bandwidth_hz, cache=None, sh_order_sig=float("inf"),
-                    sh_order_scm=float("inf"),
-                    time_len_sig=float("inf")):
-    d, cache = load_data_file(file, cache)
+def load_stft_slice(d, center_freq_hz, bandwidth_hz, sh_order_sig=float("inf"),
+                    sh_order_scm=float("inf"), time_len_sig=float("inf")):
     d = select_orders_and_time(d, sh_order_sig=sh_order_sig, sh_order_scm=sh_order_scm, time_len_sig=time_len_sig)
     freq_to_bin = lambda f: int(np.argmin(np.abs(d['freq'] - f)))
     center_bin = freq_to_bin(center_freq_hz)
@@ -69,7 +51,7 @@ def load_stft_slice(file, center_freq_hz, bandwidth_hz, cache=None, sh_order_sig
     y = torch.stack([torch.from_numpy(np.real(y)), torch.from_numpy(np.imag(y))])
     # y is now of shape (2, channels_out, channels_out)
 
-    return x, y, cache
+    return x, y
 
 
 def select_orders_and_time(d, sh_order_sig, sh_order_scm, time_len_sig):
@@ -143,9 +125,9 @@ class Dataset(data.Dataset):
             self.samples.append((x, y))
 
     def load_single_file(self, filename):
-        x, y, self.vec2mat_cache = load_stft_slice(filename, self.center_frequency, self.bandwidth, self.vec2mat_cache,
-                                                   sh_order_sig=self.sh_order_sig,
-                                                   sh_order_scm=self.sh_order_scm, time_len_sig=self.time_len_sig)
+        d, self.vec2mat_cache = load_data_file(filename, self.vec2mat_cache)
+        x, y  = load_stft_slice(d, self.center_frequency, self.bandwidth, sh_order_sig=self.sh_order_sig,
+                                sh_order_scm=self.sh_order_scm, time_len_sig=self.time_len_sig)
         return x, y
 
     def __getitem__(self, item: int):

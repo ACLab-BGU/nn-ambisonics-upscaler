@@ -9,6 +9,19 @@ from src.data import load_data_file
 from src.utils.audio import torch_stft_nd
 
 
+def get_sliced_stft(x, nfft, freq_bins_range):
+    # x is of shape (time, channels)
+    x = torch_stft_nd(torch.from_numpy(x), time_dim=0,
+                      n_fft=nfft, hop_length=nfft // 4, onesided=True, window=torch.hann_window(nfft))
+    # x_stft is of shape (channels, freq, time, real/imag)
+
+    # slice to a single freq
+    x = x[:, freq_bins_range, :, :]
+
+    # transform to shape (real/imag, channels, freq, time)
+    return x.permute((3, 0, 1, 2))
+
+
 def get_narrowband_signal(x, nfft, freq_bin):
     # x is of shape (time, channels)
     x = torch_stft_nd(torch.from_numpy(x), time_dim=0,
@@ -35,6 +48,27 @@ def load_single_freq(file, freq, cache=None, sh_order_sig=float("inf"), sh_order
     y = torch.stack([torch.from_numpy(np.real(y)), torch.from_numpy(np.imag(y))])
 
     # y is now of show (2, channels_out, channels_out)
+    return x, y, cache
+
+
+def load_stft_slice(file, center_freq_hz, bandwidth_hz, cache=None, sh_order_sig=float("inf"),
+                    sh_order_scm=float("inf"),
+                    time_len_sig=float("inf")):
+    d, cache = load_data_file(file, cache)
+    d = select_orders_and_time(d, sh_order_sig=sh_order_sig, sh_order_scm=sh_order_scm, time_len_sig=time_len_sig)
+    freq_to_bin = lambda f: int(np.argmin(np.abs(d['freq'] - f)))
+    center_bin = freq_to_bin(center_freq_hz)
+    bin_low = freq_to_bin(center_freq_hz - bandwidth_hz / 2)
+    bin_high = 2 * center_bin - bin_low
+    bin_range = range(bin_low, bin_high + 1)
+    x = get_sliced_stft(d['anm'], d['nfft'], bin_range)
+    # x is of shape (real/imag, channels, frequency, time)
+
+    y = d['R'][center_bin]
+    # y is now a  complex numpy array. convert to a real torch.tensor
+    y = torch.stack([torch.from_numpy(np.real(y)), torch.from_numpy(np.imag(y))])
+    # y is now of shape (2, channels_out, channels_out)
+
     return x, y, cache
 
 
@@ -70,8 +104,9 @@ def select_orders_and_time(d, sh_order_sig, sh_order_scm, time_len_sig):
 
     return d
 
+
 class Dataset(data.Dataset):
-    def __init__(self, root, frequency, transform=None, preload=True, dtype=torch.float32, train=True,
+    def __init__(self, root, center_frequency, bandwidth, transform=None, preload=True, dtype=torch.float32, train=True,
                  sh_order_sig=float("inf"), sh_order_scm=float("inf"), time_len_sig=float("inf")):
 
         self.dtype = dtype
@@ -89,7 +124,8 @@ class Dataset(data.Dataset):
         assert len(self.filenames) > 0, 'data folder is empty'
         self.len = len(self.filenames)
 
-        self.frequency = frequency
+        self.center_frequency = center_frequency
+        self.bandwidth = bandwidth
         self.vec2mat_cache = None
         if preload:
             self._preload()
@@ -103,10 +139,14 @@ class Dataset(data.Dataset):
         # load all files to memory and form the database
         for i, fn in enumerate(self.filenames):
             print(i / len(self.filenames))
-            x, y, self.vec2mat_cache = load_single_freq(fn, self.frequency, self.vec2mat_cache,
-                                                        sh_order_sig=self.sh_order_sig,
-                                                        sh_order_scm=self.sh_order_scm, time_len_sig=self.time_len_sig)
+            x, y = self.load_single_file(fn)
             self.samples.append((x, y))
+
+    def load_single_file(self, filename):
+        x, y, self.vec2mat_cache = load_stft_slice(filename, self.center_frequency, self.bandwidth, self.vec2mat_cache,
+                                                   sh_order_sig=self.sh_order_sig,
+                                                   sh_order_scm=self.sh_order_scm, time_len_sig=self.time_len_sig)
+        return x, y
 
     def __getitem__(self, item: int):
         """
@@ -117,9 +157,7 @@ class Dataset(data.Dataset):
         if self.preload_flag:
             x, y = self.samples[item]
         else:
-            x, y, self.vec2mat_cache = load_single_freq(self.filenames[item], self.frequency, self.vec2mat_cache,
-                                                        sh_order_sig=self.sh_order_sig,
-                                                        sh_order_scm=self.sh_order_scm, time_len_sig=self.time_len_sig)
+            x, y = self.load_single_file(self.filenames[item])
 
         # perform some transformation
         if self.transform:

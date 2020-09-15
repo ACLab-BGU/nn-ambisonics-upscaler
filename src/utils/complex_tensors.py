@@ -87,15 +87,46 @@ def calc_scm(x, smoothing_dim, channels_dim, real_imag_dim, batch_dim):
     return R / T
 
 
+def complex_tensordot(x_re, x_im, y_re, y_im, dims=2, stack_dim=1):
+    z_re = torch.tensordot(x_re, y_re, dims) - torch.tensordot(x_im, y_im, dims)
+    z_im = torch.tensordot(x_re, y_im, dims) + torch.tensordot(x_im, y_re, dims)
+    return torch.stack((z_re, z_im), dim=stack_dim)
+
+
 class ComplexConv1d(nn.Module):
     def __init__(self, **kwargs):
         super().__init__()
 
-        ## Model components
+        # Model components
         self.conv_re = nn.Conv1d(**kwargs)
         self.conv_im = nn.Conv1d(**kwargs)
 
     def forward(self, x):  # shape of x : [batch,2,channel,time]
+        real = self.conv_re(x[:, 0]) - self.conv_im(x[:, 1])
+        imaginary = self.conv_re(x[:, 1]) + self.conv_im(x[:, 0])
+        output = torch.stack((real, imaginary), dim=1)
+        return output
+
+    @property
+    def weight(self):
+        return torch.stack((self.conv_re.weight, self.conv_im.weight), dim=0)
+
+    @property
+    def bias(self):
+        if self.conv_re.bias is None:
+            return None
+        return torch.stack((self.conv_re.bias, self.conv_im.bias), dim=0)
+
+
+class ComplexConv2d(nn.Module):
+    def __init__(self, **kwargs):
+        super().__init__()
+
+        # Model components
+        self.conv_re = nn.Conv2d(**kwargs)
+        self.conv_im = nn.Conv2d(**kwargs)
+
+    def forward(self, x):  # shape of x : [batch, 2, channel, freq, time]
         real = self.conv_re(x[:, 0]) - self.conv_im(x[:, 1])
         imaginary = self.conv_re(x[:, 1]) + self.conv_im(x[:, 0])
         output = torch.stack((real, imaginary), dim=1)

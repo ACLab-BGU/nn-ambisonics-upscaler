@@ -3,7 +3,6 @@ import os
 import pickle
 from pathlib import Path
 
-import matlab.engine
 import numpy as np
 import scipy.io as sio
 
@@ -21,6 +20,9 @@ output_format = "mat"  # pickle/mat/npz
 
 def gen_data(num_of_reflections, source_type, num_of_files, path_data, output_format):
     '''generate data using matlab'''
+
+    import matlab.engine
+
     eng = matlab.engine.start_matlab()
     eng.cd('MATLAB')
     eng.restoredefaultpath(nargout=0)

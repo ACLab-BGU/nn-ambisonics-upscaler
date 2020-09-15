@@ -8,7 +8,8 @@ def l2_sq_complex(x) -> torch.Tensor:
     return torch.sum(x[0] ** 2 + x[1] ** 2) / x[0].shape[0]
 
 
-def get_real_imag_parts(x):
+def get_real_imag_parts_old(x):
+    # do not use, use get_real_imag_parts instead
     # x: (_, 2, _, _)
 
     x_real = x[:, 0]
@@ -25,13 +26,20 @@ def cat_real_imag_parts(x_real, x_imag):
     return torch.cat((x_real.view(shape_vec), x_imag.view(shape_vec)), dim=1)
 
 
-def complex_mm(x, y):
-    # x - ((N, M, L), (N, M, L))
-    # y - ((N, L, K), (N, L, K))
-    # out - ((N, M, K), (N, M, K))
+def get_real_imag_parts(x, complex_dim=None):
+    if complex_dim is None:
+        x_real, x_imag = x
+    else:
+        x_real = torch.narrow(x, complex_dim, 0, 1)
+        x_imag = torch.narrow(x, complex_dim, 1, 1)
+    return x_real, x_imag
 
-    x_real, x_imag = x
-    y_real, y_imag = y
+def complex_mm(x, y, complex_dim=None):
+    # x - ((*_, M, L), (*_, M, L)) or tensor with complex channels at dimension complex_dim
+    # y - ((*_, L, K), (*_, L, K)) or tensor with complex channels at dimension complex_dim
+    # out - ((*_, M, K), (*_, M, K))
+    x_real, x_imag = get_real_imag_parts(x, complex_dim)
+    y_real, y_imag = get_real_imag_parts(y, complex_dim)
 
     out_real = torch.matmul(x_real, y_real) - torch.matmul(x_imag, y_imag)
     out_imag = torch.matmul(x_real, y_imag) + torch.matmul(x_imag, y_real)
@@ -40,9 +48,9 @@ def complex_mm(x, y):
 
 
 def complex_outer_product(x, y=None):
-    # x - ((N, Q, L), (N, Q, L))
-    # y - ((N, Q, L), (N, Q, L))
-    # out - ((N, Q, Q), (N, Q, Q))
+    # x - ((*_, Q, L), (*_, Q, L))
+    # y - ((*_, Q, L), (*_, Q, L))
+    # out - ((*_, Q, Q), (*_, Q, Q))
 
     if y is None:
         y = x

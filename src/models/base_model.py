@@ -19,6 +19,9 @@ class BaseModel(LightningModule, ABC):
         self._Dataset = self._get_dataset_class()
         self.dataset_args = self._get_dataset_args()
 
+        # set input size
+        self.input_shape, self.output_shape = self._get_input_output_shapes()
+
         # loss
         self.loss = self._get_loss()
 
@@ -138,3 +141,11 @@ class BaseModel(LightningModule, ABC):
         tensorboard_logs = {'test_loss': avg_loss}
 
         return {'test_loss': avg_loss, 'log': tensorboard_logs}
+
+    def _get_input_output_shapes(self):
+        x, target = self._example_input_output()
+        return x.shape, target.shape
+
+    def _example_input_output(self):
+        x, target = next(iter(self._Dataset(self.hparams.data_path, train=True, preload=False, **self.dataset_args)))
+        return x, target

@@ -12,12 +12,12 @@ from scipy import io as sio
 
 num_of_reflections = [10]
 source_type = ["whitenoise"]  # whitenoise/speech
-num_of_files = 100
+num_of_files = 50000
 sig_length = 2
 target_sh_order = 4
 compact_cov = False
 path_data = os.path.join("..", "..", "data")
-output_format = "npz"  # pickle/mat/npz
+output_format = "pickle"  # pickle/mat/npz
 
 
 def gen_data(num_of_reflections, source_type, compact_cov, num_of_files, path_data, output_format):

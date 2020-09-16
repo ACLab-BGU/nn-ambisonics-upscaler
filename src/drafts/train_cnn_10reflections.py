@@ -5,7 +5,7 @@ from src.utils import get_experiments_dir
 
 hidden_layers = 2
 train({"model_name":"cnn",
-       "data_path": "/Users/ranweisman/PycharmProjects/nn-ambisonics-upscaler/data/whitenoise_10_reflections_python",
+       "data_path": "/Users/ranweisman/PycharmProjects/nn-ambisonics-upscaler/data/whitenoise_10_reflections",
        "logs_path": os.path.join(get_experiments_dir(),'cnn'),
        "experiment_name": "profiling_stuff",
        "max_epochs": 3,

@@ -17,7 +17,7 @@ default_opts = {
     "experiment_name": 'cnn_free_field',
     # ---data options---
     "center_frequency": 2500.,
-    "bandwidth": 4000,
+    "bandwidth": 100.,
     # ---network structure---
     "model_name": 'cnn',
     "complex_conv": True,
@@ -26,7 +26,7 @@ default_opts = {
     "kernel_widths": [1, 2, 3],
     "strides": [1, 1, 1],
     "hidden_channels": [25 * 2, 36 * 2],  # *2 for real/imag
-    "residual_flag": True,
+    "residual_flag": False,
     "force_residual": True,
     "loss": 'mse',  # 'mse'
     "sh_order_sig": float("inf"),
@@ -176,7 +176,7 @@ class CNN(BaseModel):
     def _get_input_output_sizes(self):
         # determine the number of channels of the input and output layers from data.
 
-        dataset = Dataset(self.hparams.data_path, train=True, preload=False, **self.dataset_args)
+        dataset = self._Dataset(self.hparams.data_path, train=True, preload=False, **self.dataset_args)
         x, target = next(iter(dataset))
         #  input shape should be (2, Q_in, F, T), target shape should be (2, Q_out, Q_out)
         assert x.shape[0] == 2, "0 dim (real-imag) of input must be 2"

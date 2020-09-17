@@ -11,11 +11,12 @@ from scipy import io as sio
 
 num_of_reflections = [10]
 source_type = ["whitenoise"]  # whitenoise/speech
-num_of_files = 5
-sig_length = 0.5
-target_sh_order = 5
+num_of_files = 50000
+sig_length = 2
+target_sh_order = 4
+compact_cov = False
 path_data = os.path.join("..", "..", "data")
-output_format = "mat"  # pickle/mat/npz
+output_format = "pickle"  # pickle/mat/npz
 nfft = 512
 stft_win_size = 512
 stft_hop_size = 256

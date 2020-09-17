@@ -48,7 +48,7 @@ class NNIWF(BaseModel):
         # output shape is (2, Qz, Qx)
         # z shape is (2, Qz)
         self.z_shape = self.output_shape[:2]
-        self.x_shape = self.input_shape[:2] # TODO: make sure shapes are correct, what about frequency?
+        self.x_shape = self.input_shape[:2]  # TODO: make sure shapes are correct, what about frequency?
 
         # define network parameters
         self.input2rnn_input = FlattenInput2RNNInput(self.input_shape)
@@ -59,7 +59,6 @@ class NNIWF(BaseModel):
         self.rnn_output_to_dz = FCHidden2dz(input_shape=self.hparams.rnn_hidden_size, output_shape=self.z_shape,
                                             hidden_sizes=self.hparams.fc_hidden_sizes)
 
-
     def forward(self, x):
         # REQUIRED (lightning)
         # TODO: doc the shape of x
@@ -67,10 +66,9 @@ class NNIWF(BaseModel):
         rnn_input = self.input2rnn_input(x)
         h = self.rnn(rnn_input)
         dz = self.rnn_output_to_dz(h)
+        Rzx, x_transformed = self.iwf(x, dz)
 
-        Rzx = self.iwf(x, dz)
-
-        return Rzx
+        return Rzx, x_transformed
 
     def iwf(self, x, dz, return_type="Rzx"):
         # x is of shape (T, N, 2, Qin, F)
@@ -79,16 +77,16 @@ class NNIWF(BaseModel):
         Rzx = torch.zeros(T, 2, Qz, Qx)
         z = torch.zeros(T, 2, Qz)
         for t in torch.range(T):
-            Rzx_prev = Rzx[t-1] if t else 0.
-            z_prime = complex_matmul( Rzx_prev , x_transformed[t], dims=[(),()] )
+            Rzx_prev = Rzx[t - 1] if t else 0.
+            z_prime = complex_matmul(Rzx_prev, x_transformed[t], dims=[(), ()])
             z[t] = z_prime + dz[t]
 
-            Rzx[t] = (t * Rzx_prev + complex_outerporod(z[t], x[t]))/(t+1)
+            Rzx[t] = (t * Rzx_prev + complex_outerporod(z[t], x[t])) / (t + 1)
 
-        if return_type=="Rzx":
-            return Rzx
-        elif return_type=="z":
-            return z
+        if return_type == "Rzx":
+            return Rzx, x_transformed
+        elif return_type == "z":
+            return z, x_transformed
         else:
             raise NotImplementedError
 
@@ -132,12 +130,12 @@ class FlattenInput2RNNInput(Input2RNNInput):
         # features is of shape (T, N, 2*Q_in*F)
 
         features = x.permute((4, 0, 1, 2, 3))
-        features = features.view((*features.shape[:2],-1))
+        features = features.view((*features.shape[:2], -1))
         return features
 
     def get_output_shape(self):
         _, Q_in, F, _ = self.input_shape
-        return 2*F*Q_in
+        return 2 * F * Q_in
 
 
 class Hidden2dz(nn.Module):
@@ -152,13 +150,12 @@ class FCHidden2dz(Hidden2dz):
         super().__init__(input_shape, output_shape)
 
         sizes = [torch.prod(self.input_shape), *hidden_sizes, torch.prod(self.output_shape)]
-        self.linears = nn.ModuleList([nn.Linear(in_size,out_size) for in_size,out_size in zip(sizes,sizes[1:])])
-
+        self.linears = nn.ModuleList([nn.Linear(in_size, out_size) for in_size, out_size in zip(sizes, sizes[1:])])
 
     def forward(self, x):
         # x is of shape (T, N, *self.input_shape)
         T, N, *_ = x.shape
-        assert(x.shape[2:] == self.input_shape)
+        assert (x.shape[2:] == self.input_shape)
 
         for layer in self.linears:
             x = layer(x)

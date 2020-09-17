@@ -2,6 +2,8 @@ import numpy as np
 import torch
 from torch import nn
 
+# default complex dimension for the complex functions
+def_complex_dim = None
 
 def l2_sq_complex(x) -> torch.Tensor:
     # x: ((N, M, L), (N, M, L))
@@ -26,15 +28,17 @@ def cat_real_imag_parts(x_real, x_imag):
     return torch.cat((x_real.view(shape_vec), x_imag.view(shape_vec)), dim=1)
 
 
-def get_real_imag_parts(x, complex_dim=None):
+def get_real_imag_parts(x, complex_dim=def_complex_dim):
     if complex_dim is None:
+        assert (type(x) == list or type(x) == tuple) and (len(x) == 2), 'invalid input type'
         x_real, x_imag = x
     else:
+        assert x.shape[complex_dim] == 2, "invalid input dimensions, complex dimensions must be of size 2"
         x_real = torch.narrow(x, complex_dim, 0, 1)
         x_imag = torch.narrow(x, complex_dim, 1, 1)
     return x_real, x_imag
 
-def complex_mm(x, y, complex_dim=None):
+def complex_mm(x, y, complex_dim=def_complex_dim):
     # x - ((*_, M, L), (*_, M, L)) or tensor with complex channels at dimension complex_dim
     # y - ((*_, L, K), (*_, L, K)) or tensor with complex channels at dimension complex_dim
     # out - ((*_, M, K), (*_, M, K))
@@ -58,7 +62,7 @@ def complex_outer_product(x, y=None):
     x_real, x_imag = x
     y_real, y_imag = y
 
-    return complex_mm((x_real, x_imag), (y_real.transpose(1, 2), -y_imag.transpose(1, 2)))
+    return complex_mm((x_real, x_imag), (y_real.transpose(-2, -1), -y_imag.transpose(-2, -1)))
 
 
 def complextorch2numpy(x, dim=0):

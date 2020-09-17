@@ -12,22 +12,14 @@ from src.utils import get_data_dir, get_experiments_dir
 
 default_opts = {
     # ---folders---
-    "data_path": os.path.join(get_data_dir(), 'whitenoise_0_reflections'),
+    "data_path": os.path.join(get_data_dir(), 'whitenoise_10_reflections'),
     "logs_path": get_experiments_dir(),
-    "experiment_name": 'cnn_free_field',
+    "experiment_name": 'rnn_QA',
     # ---data options---
     "center_frequency": 2500.,
-    "bandwidth": 4000,
+    "bandwidth": 400,
     # ---network structure---
-    "model_name": 'cnn',
-    "complex_conv": True,
-    "bias": True,
-    "hidden_layers": 2,
-    "kernel_widths": [1, 2, 3],
-    "strides": [1, 1, 1],
-    "hidden_channels": [25 * 2, 36 * 2],  # *2 for real/imag
-    "residual_flag": True,
-    "force_residual": True,
+    "model_name": 'rnn',
     "loss": 'mse',  # 'mse'
     "sh_order_sig": float("inf"),
     "sh_order_scm": float("inf"),
@@ -56,7 +48,7 @@ class NNIWF(BaseModel):
         # output shape is (2, Qz, Qx)
         # z shape is (2, Qz)
         self.z_shape = self.output_shape[:2]
-        self.x_shape = self.input_shape[?] # TODO: fix this, should be (2, Qx)
+        self.x_shape = self.input_shape[:2] # TODO: make sure shapes are correct, what about frequency?
 
         # define network parameters
         self.input2rnn_input = FlattenInput2RNNInput(self.input_shape)
@@ -64,7 +56,8 @@ class NNIWF(BaseModel):
                            hidden_size=self.hparams.rnn_hidden_size,
                            num_layers=self.hparams.rnn_num_layers,
                            bidirectional=self.hparams.rnn_bidirectional)
-        self.rnn_output_to_dz = FCHidden2dz(self.hparams.rnn_hidden_size, self.z_shape, hidden_sizes=self.hparams.fc_hidden_sizes)
+        self.rnn_output_to_dz = FCHidden2dz(input_shape=self.hparams.rnn_hidden_size, output_shape=self.z_shape,
+                                            hidden_sizes=self.hparams.fc_hidden_sizes)
 
 
     def forward(self, x):
@@ -105,7 +98,8 @@ class NNIWF(BaseModel):
                             bandwidth=self.hparams.bandwidth,
                             sh_order_sig=self.hparams.sh_order_sig,
                             sh_order_scm=self.hparams.sh_order_scm,
-                            time_len_sig=self.hparams.time_len_sig)
+                            time_len_sig=self.hparams.time_len_sig,
+                            use_cross_scm=True)
 
         return dataset_args
 

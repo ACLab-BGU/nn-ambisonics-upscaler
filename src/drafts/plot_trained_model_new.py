@@ -1,7 +1,7 @@
 from src.models.cnn_model import CNN
 import matplotlib.pyplot as plt
 import src.utils.visualizations as vis
-from src.utils.complex_tensors import complextorch2numpy
+from src.utils.complex_tensors_old import complextorch2numpy
 
 
 def plot_examples(chkpt_path):

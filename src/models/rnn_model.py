@@ -61,32 +61,32 @@ class NNIWF(BaseModel):
 
     def forward(self, x):
         # REQUIRED (lightning)
-        # TODO: doc the shape of x
-
+        # TODO: doc the shape of x      
+        # TODO: fix shaping of x, T is not in the beginning..
         rnn_input = self.input2rnn_input(x)
         h = self.rnn(rnn_input)
         dz = self.rnn_output_to_dz(h)
-        Rzx, x_transformed = self.iwf(x, dz)
+        Rzx, x_nb_transformed = self.iwf(x, dz)
 
-        return Rzx, x_transformed
+        return Rzx, x_nb_transformed
 
     def iwf(self, x, dz, return_type="Rzx"):
         # x is of shape (T, N, 2, Qin, F)
-        x_transformed = complex_solve(x, Rx)
+        x_nb_transformed = complex_solve(x, Rx)
 
         Rzx = torch.zeros(T, 2, Qz, Qx)
         z = torch.zeros(T, 2, Qz)
         for t in torch.range(T):
             Rzx_prev = Rzx[t - 1] if t else 0.
-            z_prime = complex_matmul(Rzx_prev, x_transformed[t], dims=[(), ()])
+            z_prime = complex_matmul(Rzx_prev, x_nb_transformed[t], dims=[(), ()])
             z[t] = z_prime + dz[t]
 
             Rzx[t] = (t * Rzx_prev + complex_outerporod(z[t], x[t])) / (t + 1)
 
         if return_type == "Rzx":
-            return Rzx, x_transformed
+            return Rzx, x_nb_transformed
         elif return_type == "z":
-            return z, x_transformed
+            return z, x_nb_transformed
         else:
             raise NotImplementedError
 

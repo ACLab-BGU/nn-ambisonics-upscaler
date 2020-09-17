@@ -9,14 +9,16 @@ arguments
     opts.output_type (1,1) string {mustBeMember(opts.output_type, ["covs", "signals"])} = "signals"
     opts.number_of_reflections (1,1) double = inf
 %     opts.output_freqs = "all" % relevant only for output_type = "covs".
-    opts.folder_path (1,1) string = fullfile(get_raw_data_folder_path(), "image-method");
+    opts.folder_path (1,1) string = fullfile(get_raw_data_folder_path(), "image-method")
     opts.decimation_factor = 3
     opts.R_dtype = "single"
     opts.anm_dtype = "int16"
-    opts.nfft = 512;
+    opts.nfft (1,1) double = 512
+    opts.stft_win_size (1,1) double = 512
+    opts.stft_hop_size (1,1) double = 256
     opts.source_type = "whitenoise"
-    opts.duration = 3; % sec
-    opts.signal_order_to_save = 3;
+    opts.duration = 3 % sec
+    opts.signal_order_to_save = 3
     opts.real_sh (1,1) logical = true
     opts.target_sh_order = 6
     opts.vec_covs (1,1) logical = true
@@ -38,7 +40,7 @@ for i=start_index:num_of_files
     anm = anm((ceil(1*fs)+1):(size(anm,1)-ceil(1*fs)),:);
 
     %% calculate matrices
-    [R, freq] = calculate_narrowband_scm(anm, fs, "NFFT", opts.nfft, "stft_window", hann(opts.nfft));
+    [R, freq] = calculate_narrowband_scm(anm, fs, "NFFT", opts.nfft, "stft_window", hann(opts.stft_win_size),"stft_hop",opts.stft_hop_size);
     F = size(R, 3);
     R_complex = R;
     if opts.vec_covs

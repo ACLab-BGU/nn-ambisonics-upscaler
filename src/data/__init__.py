@@ -16,6 +16,9 @@ sig_length = 0.5
 target_sh_order = 5
 path_data = os.path.join("..", "..", "data")
 output_format = "mat"  # pickle/mat/npz
+nfft = 512
+stft_win_size = 512
+stft_hop_size = 256
 
 
 def gen_data(num_of_reflections, source_type, num_of_files, path_data, output_format):
@@ -36,7 +39,8 @@ def gen_data(num_of_reflections, source_type, num_of_files, path_data, output_fo
 
             # generate file with matlab and save to mat file
             eng.make_image_method_data(num_of_files, 1, "folder_path", folder_path, "number_of_reflections", refs,
-                                       "source_type", sig, "duration", sig_length, "target_sh_order", target_sh_order)
+                                       "source_type", sig, "duration", sig_length, "target_sh_order", target_sh_order,
+                                       "nfft",nfft,"stft_win_size",stft_win_size,"stft_hop_size",stft_hop_size)
 
             # convert files to a better format
             # TODO: check more efficient alternatives, instead of saving mat files and then converting

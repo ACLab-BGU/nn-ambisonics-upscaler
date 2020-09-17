@@ -11,7 +11,7 @@ from torch.utils.data import DataLoader, random_split
 from src.data.base_dataset import BasicDatasetLT
 from src.models.base_model import BaseModel
 from src.utils import get_data_dir, get_experiments_dir
-from src.utils.complex_tensors import get_real_imag_parts_old, complex_outer_product, cat_real_imag_parts
+from src.utils.complex_tensors_old import get_real_imag_parts_old, complex_outer_product, cat_real_imag_parts
 
 default_opts = {
     # ---folders---

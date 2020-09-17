@@ -2,7 +2,7 @@ from unittest import TestCase
 
 import torch
 
-from src.utils.complex_tensors import get_real_imag_parts_old, complex_mm, cat_real_imag_parts
+from src.utils.complex_tensors_old import get_real_imag_parts_old, complex_mm, cat_real_imag_parts
 
 
 class Test(TestCase):

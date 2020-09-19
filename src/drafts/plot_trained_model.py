@@ -9,7 +9,7 @@ from src import options
 from src.models.fc_model import BaseModelLT, default_opts, FC
 from src.utils import get_experiments_dir
 
-from src.utils.complex_tensors import complextorch2numpy
+from src.utils.complex_tensors_old import complextorch2numpy
 import src.utils.visualizations as vis
 
 import matplotlib.pyplot as plt

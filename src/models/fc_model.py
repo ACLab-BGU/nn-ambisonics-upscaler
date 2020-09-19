@@ -11,7 +11,7 @@ from torch.utils.data import DataLoader, random_split
 from src.data.base_dataset import BasicDatasetLT
 from src.models.base_model import BaseModel
 from src.utils import get_data_dir, get_experiments_dir
-from src.utils.complex_tensors import get_real_imag_parts, complex_outer_product, cat_real_imag_parts
+from src.utils.complex_tensors_old import get_real_imag_parts_old, complex_outer_product, cat_real_imag_parts
 
 default_opts = {
     # ---folders---
@@ -82,7 +82,7 @@ class FC(BaseModel):
             x = x.view((x.shape[0], *self.hparams.output_shape))
         else:
             x = x.view((x.shape[0],2,self.hparams.output_shape[-1],self.hparams.rank))
-            x = cat_real_imag_parts(*complex_outer_product(get_real_imag_parts(x))) # TODO: wrap 3 functions together, for simpler syntax for outer-product
+            x = cat_real_imag_parts(*complex_outer_product(get_real_imag_parts_old(x))) # TODO: wrap 3 functions together, for simpler syntax for outer-product
 
         if self.hparams.residual_flag:
             x[:, :, :x_orig.shape[-2], :x_orig.shape[-1]] += x_orig
@@ -170,7 +170,7 @@ class BaseModelLT(LightningModule):
             x = x.view((x.shape[0], *self.hparams.output_shape))
         else:
             x = x.view((x.shape[0],2,self.hparams.output_shape[-1],self.hparams.rank))
-            x = cat_real_imag_parts(*complex_outer_product(get_real_imag_parts(x))) # TODO: wrap 3 functions together, for simpler syntax for outer-product
+            x = cat_real_imag_parts(*complex_outer_product(get_real_imag_parts_old(x))) # TODO: wrap 3 functions together, for simpler syntax for outer-product
 
         if self.hparams.residual_flag:
             x[:, :, :x_orig.shape[-2], :x_orig.shape[-1]] += x_orig

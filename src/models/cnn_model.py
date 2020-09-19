@@ -8,7 +8,7 @@ import torch.nn.functional as F
 from src.data.sig2scm_dataset import Dataset
 from src.models.base_model import BaseModel
 from src.utils import get_data_dir, get_experiments_dir
-from src.utils.complex_tensors import calc_scm, ComplexConv2d
+from src.utils.complex_tensors_old import calc_scm, ComplexConv2d
 
 default_opts = {
     # ---folders---

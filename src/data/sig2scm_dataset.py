@@ -36,7 +36,7 @@ def get_narrowband_signal(x, nfft, freq_bin):
 
 
 def load_stft_slice(d, center_freq_hz, bandwidth_hz, sh_order_sig=float("inf"),
-                    sh_order_scm=float("inf"), time_len_sig=float("inf")):
+                    sh_order_scm=float("inf"), time_len_sig=float("inf"), cross_scm=False):
     d = select_orders_and_time(d, sh_order_sig=sh_order_sig, sh_order_scm=sh_order_scm, time_len_sig=time_len_sig)
     freq_to_bin = lambda f: int(np.argmin(np.abs(d['freq'] - f)))
     center_bin = freq_to_bin(center_freq_hz)
@@ -47,6 +47,11 @@ def load_stft_slice(d, center_freq_hz, bandwidth_hz, sh_order_sig=float("inf"),
     # x is of shape (real/imag, channels, frequency, time)
 
     y = d['R'][center_bin]
+
+    # in case of need to return cross SCM only, and not the full SCM
+    if cross_scm:
+        y = y[((sh_order_sig + 1) ** 2):, :(sh_order_sig + 1) ** 2]
+
     # y is now a  complex numpy array. convert to a real torch.tensor
     y = torch.stack([torch.from_numpy(np.real(y)), torch.from_numpy(np.imag(y))])
     # y is now of shape (2, channels_out, channels_out)
@@ -89,7 +94,7 @@ def select_orders_and_time(d, sh_order_sig, sh_order_scm, time_len_sig):
 
 class Dataset(data.Dataset):
     def __init__(self, root, center_frequency, bandwidth, transform=None, preload=True, dtype=torch.float32, train=True,
-                 sh_order_sig=float("inf"), sh_order_scm=float("inf"), time_len_sig=float("inf")):
+                 sh_order_sig=float("inf"), sh_order_scm=float("inf"), time_len_sig=float("inf"), use_cross_scm=False):
 
         self.dtype = dtype
         self.transform = transform
@@ -97,6 +102,7 @@ class Dataset(data.Dataset):
         self.sh_order_sig = sh_order_sig
         self.sh_order_scm = sh_order_scm
         self.time_len_sig = time_len_sig
+        self.use_cross_scm = use_cross_scm
 
         if train:
             root = os.path.join(root, 'train')
@@ -127,7 +133,7 @@ class Dataset(data.Dataset):
     def load_single_file(self, filename):
         d, self.vec2mat_cache = load_data_file(filename, self.vec2mat_cache)
         x, y  = load_stft_slice(d, self.center_frequency, self.bandwidth, sh_order_sig=self.sh_order_sig,
-                                sh_order_scm=self.sh_order_scm, time_len_sig=self.time_len_sig)
+                                sh_order_scm=self.sh_order_scm, time_len_sig=self.time_len_sig, cross_scm=self.use_cross_scm)
         return x, y
 
     def __getitem__(self, item: int):
@@ -145,13 +151,15 @@ class Dataset(data.Dataset):
         if self.transform:
             x, y = self.transform(x, y)
 
-        # norm_x = torch.norm(x)
-        # x /= norm_x
-        # y /= norm_x ** 2
-
-        norm_y = torch.norm(y)
-        y /= norm_y
-        x /= torch.sqrt(norm_y)
+        # normalization
+        if self.use_cross_scm:
+            norm_x = torch.norm(x)
+            x /= norm_x
+            y /= (norm_x**2)
+        else:
+            norm_y = torch.norm(y)
+            y /= norm_y
+            x /= torch.sqrt(norm_y)
 
         # return sample
         return x.type(self.dtype), y.type(self.dtype)

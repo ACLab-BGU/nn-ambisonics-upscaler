@@ -13,9 +13,9 @@ def get_real_imag_parts(x, complex_dim):
     return x_real, x_imag
 
 
-def stack_real_imag_parts(x_real, x_imag, complex_dim, return_type):
+def combine_real_imag_parts(x_real, x_imag, complex_dim, return_type):
     if return_type == "tensor":
-        return torch.stack([x_real, x_imag], complex_dim)
+        return torch.cat([x_real, x_imag], complex_dim)
     elif return_type == "tuple":
         return x_real, x_imag
     else:
@@ -29,7 +29,7 @@ def matmul(x, y, complex_dim, return_type="tensor"):
     out_real = torch.matmul(x_real, y_real) - torch.matmul(x_imag, y_imag)
     out_imag = torch.matmul(x_real, y_imag) + torch.matmul(x_imag, y_real)
 
-    return stack_real_imag_parts(out_real, out_imag, complex_dim, return_type)
+    return combine_real_imag_parts(out_real, out_imag, complex_dim, return_type)
 
 
 def hermite(x, dim0, dim1, complex_dim, return_type="tensor"):
@@ -37,7 +37,7 @@ def hermite(x, dim0, dim1, complex_dim, return_type="tensor"):
     x_real, x_imag = get_real_imag_parts(x, complex_dim)
     x_imag = -x_imag
 
-    return stack_real_imag_parts(x_real, x_imag, complex_dim, return_type)
+    return combine_real_imag_parts(x_real, x_imag, complex_dim, return_type)
 
 
 def outer_product(x, y, complex_dim, return_type="tensor"):
@@ -57,7 +57,7 @@ def solve(b, a, complex_dim, return_type="tensor"):
     x, _ = torch.solve(b, a)
 
     x = torch.chunk(x, 2, dim=-2)
-    return stack_real_imag_parts(x[0], x[1], complex_dim, return_type)
+    return combine_real_imag_parts(x[0], x[1], complex_dim, return_type)
 
 
 def to_numpy(x, complex_dim):
@@ -76,9 +76,9 @@ def from_numpy(x, complex_dim, return_type="tensor"):
     # x - the numpy array
     # dim - the dimension to put the real/imag parts
     assert type(x) == np.ndarray, "input must be a numpy array"
-    return stack_real_imag_parts(torch.from_numpy(np.real(x)),
-                                 torch.from_numpy(np.imag(x)),
-                                 complex_dim, return_type)
+    return combine_real_imag_parts(torch.from_numpy(np.expand_dims(x.real,complex_dim)),
+                                   torch.from_numpy(np.expand_dims(x.imag,complex_dim)),
+                                   complex_dim, return_type)
 
 
 def calc_scm(x, complex_dim, smoothing_dim, channels_dim, return_type="tensor"):
@@ -105,7 +105,7 @@ def tensordot(x, y, complex_dim, tensordot_dims, return_type="tensor", conj_y=Fa
     out_real = torch.tensordot(x_real, y_real, tensordot_dims) - torch.tensordot(x_imag, y_imag, tensordot_dims)
     out_imag = torch.tensordot(x_real, y_imag, tensordot_dims) + torch.tensordot(x_imag, y_real, tensordot_dims)
 
-    return stack_real_imag_parts(out_real, out_imag, complex_dim, return_type)
+    return combine_real_imag_parts(out_real, out_imag, complex_dim, return_type)
 
 
 class ComplexConv1d(nn.Module):

@@ -1,4 +1,4 @@
-from src.models import fc_model, cnn_model
+from src.models import fc_model, cnn_model, rnn_model
 
 
 def find_model_using_name(model_name):
@@ -8,6 +8,9 @@ def find_model_using_name(model_name):
     elif model_name == 'cnn':
         model = cnn_model.CNN
         default_opts = cnn_model.default_opts
+    elif model_name == 'rnn_NNIWF':
+        model = rnn_model.NNIWF
+        default_opts = rnn_model.default_opts
     else:
         raise NotImplementedError
 

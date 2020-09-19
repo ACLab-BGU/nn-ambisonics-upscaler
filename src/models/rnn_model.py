@@ -13,7 +13,7 @@ import src.utils.complex_torch as ctorch
 
 default_opts = {
     # ---folders---
-    "data_path": os.path.join(get_data_dir(), 'whitenoise_10_reflections'),
+    "data_path": os.path.join(get_data_dir(), 'whitenoise_10_reflections_3to4'),
     "logs_path": get_experiments_dir(),
     "experiment_name": 'rnn_QA',
     # ---data options---
@@ -22,6 +22,10 @@ default_opts = {
     # ---network structure---
     "model_name": 'rnn',
     "loss": 'mse',  # 'mse'
+    "rnn_num_layers": 2,
+    "rnn_hidden_size": 50,
+    "rnn_bidirectional": False,
+    "fc_hidden_sizes": [300,200],
     "sh_order_sig": float("inf"),
     "sh_order_scm": float("inf"),
     "time_len_sig": float("inf"),
@@ -47,9 +51,10 @@ class NNIWF(BaseModel):
         super().__init__(opts)
 
         # output shape is (2, Qz, Qx)
-        # z shape is (2, Qz)
+        # z shape is (2, Qz) (per time sample)
+        # x shape is (2, Qx, F) (per time sample)
         self.z_shape = self.output_shape[:2]
-        self.x_shape = self.input_shape[:2]  # TODO: make sure shapes are correct, what about frequency?
+        self.x_shape = self.input_shape[:3]
 
         # define network parameters
         self.input2rnn_input = FlattenInput2RNNInput(self.input_shape)
@@ -57,16 +62,20 @@ class NNIWF(BaseModel):
                            hidden_size=self.hparams.rnn_hidden_size,
                            num_layers=self.hparams.rnn_num_layers,
                            bidirectional=self.hparams.rnn_bidirectional)
-        self.rnn_output_to_dz = FCHidden2dz(input_shape=self.hparams.rnn_hidden_size, output_shape=self.z_shape,
-                                            hidden_sizes=self.hparams.fc_hidden_sizes)
+        self.rnn_output_to_dz = FCHidden2dz(input_shape=self.hparams.rnn_hidden_size if self.hparams.rnn_bidirectional is False else 2*self.hparams.rnn_hidden_size,
+                                            output_shape=self.z_shape, hidden_sizes=self.hparams.fc_hidden_sizes)
 
     def forward(self, x):
         # REQUIRED (lightning)
-        # TODO: doc the shape of x
-        # TODO: fix shaping of x, T is not in the beginning..
+
+        # x.shape is (N, 2, Qx, F, T)
         rnn_input = self.input2rnn_input(x)
-        h = self.rnn(rnn_input)
+        # rnn.shape is (T, N, 2*Qx*F)
+        h, _ = self.rnn(rnn_input)
+        # h.shape is (T, N, self.hparams.rnn_hidden_size * num_directions),
+        # where num_directions=1 if self.hparams.rnn_bidirectional==False, otherwise num_directions=2
         dz = self.rnn_output_to_dz(h)
+        # dz.shape is (T,N,*self.z_shape)
         Rzx, x_nb_transformed = self.iwf(x[:, :, :, :, self.center_freq_index], dz) # TODO: implement self.ceneter_freq_index
 
         return Rzx, x_nb_transformed
@@ -175,13 +184,13 @@ class FCHidden2dz(Hidden2dz):
     def __init__(self, input_shape, output_shape, hidden_sizes=()):
         super().__init__(input_shape, output_shape)
 
-        sizes = [torch.prod(self.input_shape), *hidden_sizes, torch.prod(self.output_shape)]
+        sizes = [np.prod(self.input_shape), *hidden_sizes, np.prod(self.output_shape)]
         self.linears = nn.ModuleList([nn.Linear(in_size, out_size) for in_size, out_size in zip(sizes, sizes[1:])])
 
     def forward(self, x):
-        # x is of shape (T, N, *self.input_shape)
-        T, N, *_ = x.shape
-        assert (x.shape[2:] == self.input_shape)
+        # x is of shape (T, N, self.input_shape)
+        T, N, _ = x.shape
+        assert (x.shape[2] == self.input_shape) and x.ndim == 3
 
         for layer in self.linears:
             x = layer(x)
@@ -191,3 +200,5 @@ class FCHidden2dz(Hidden2dz):
         # x is of shape (T, N, prod(self.output_shape))
         # reshape to (T, N, *self.output_shape)
         x = x.view((T, N, *self.output_shape))
+
+        return x

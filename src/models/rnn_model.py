@@ -9,6 +9,7 @@ import torch.nn.functional as F
 from src.data.sig2scm_dataset import Dataset
 from src.models.base_model import BaseModel
 from src.utils import get_data_dir, get_experiments_dir
+import src.utils.complex_torch as ctorch
 
 default_opts = {
     # ---folders---
@@ -61,27 +62,51 @@ class NNIWF(BaseModel):
 
     def forward(self, x):
         # REQUIRED (lightning)
-        # TODO: doc the shape of x      
+        # TODO: doc the shape of x
         # TODO: fix shaping of x, T is not in the beginning..
         rnn_input = self.input2rnn_input(x)
         h = self.rnn(rnn_input)
         dz = self.rnn_output_to_dz(h)
-        Rzx, x_nb_transformed = self.iwf(x, dz)
+        Rzx, x_nb_transformed = self.iwf(x[:, :, :, :, self.center_freq_index], dz) # TODO: implement self.ceneter_freq_index
 
         return Rzx, x_nb_transformed
 
     def iwf(self, x, dz, return_type="Rzx"):
-        # x is of shape (T, N, 2, Qin, F)
-        x_nb_transformed = complex_solve(x, Rx)
+        # x is of shape (T, N, 2, Qx)
+        # dz is of shape (T, N, 2, Qz)
 
-        Rzx = torch.zeros(T, 2, Qz, Qx)
-        z = torch.zeros(T, 2, Qz)
-        for t in torch.range(T):
-            Rzx_prev = Rzx[t - 1] if t else 0.
-            z_prime = complex_matmul(Rzx_prev, x_nb_transformed[t], dims=[(), ()])
-            z[t] = z_prime + dz[t]
+        T, N = x.shape[0:1]
+        _, Qz, Qx = self.output_shape
+        assert(x.shape == (T, N, 2, Qx))
+        assert(dz.shape == (T, N, 2, Qz))
 
-            Rzx[t] = (t * Rzx_prev + complex_outerporod(z[t], x[t])) / (t + 1)
+        Rx = ctorch.calc_scm(x, complex_dim=2, smoothing_dim=0, channels_dim=3)
+        # Rx.shape is (N, 2, Qx, Qx)
+        x = x.permute((2, 1, 3, 0))
+        # x.shape is now (2, N, Qx, T)
+        x_nb_transformed = ctorch.solve(x, Rx, complex_dim=0)
+        # x_nb_transformed is of shape (2, N, Qx, T)
+        # permute to (T, 2, N, Qx)
+        x_nb_transformed = x_nb_transformed.permute((3, 0, 1, 2))
+
+        Rzx = torch.zeros((T, 2, N, Qz, Qx))
+        z = torch.zeros((T, 2, N, Qz))
+        for t in torch.arange(T):
+            if t:
+                Rzx_prev = Rzx[t - 1]
+                # Rzx_prev.shape is (2, N, Qz, Qx)
+                # x_nb_transformed.shape is (T, 2, N, Qx)
+                z_prime = ctorch.matmul(Rzx_prev, x_nb_transformed[t, :, :, :, None], complex_dim=0)
+                # z_prime.shape is (2, N, Qz, 1)
+                z_prime = z_prime[:, :, :, 0]
+                # z_prime.shape is (2, N, Qz)
+            else:
+                Rzx_prev = 0.
+                z_prime = 0.
+            z[t] = z_prime + dz[t].permute((1, 0, 2))
+            zxh = ctorch.outer_product(z[t, :, :, :, None], x[t], complex_dim=0)
+
+            Rzx[t] = (t * Rzx_prev + zxh) / (t + 1)
 
         if return_type == "Rzx":
             return Rzx, x_nb_transformed
@@ -89,6 +114,7 @@ class NNIWF(BaseModel):
             return z, x_nb_transformed
         else:
             raise NotImplementedError
+
 
     def _get_dataset_args(self):
         # REQUIRED

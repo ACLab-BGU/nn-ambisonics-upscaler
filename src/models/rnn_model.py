@@ -55,6 +55,7 @@ class NNIWF(BaseModel):
         # x shape is (2, Qx, F) (per time sample)
         self.z_shape = self.output_shape[:2]
         self.x_shape = self.input_shape[:3]
+        self.center_freq_index = self._get_center_freq_index() # TODO: a bit ugly, maybe find a better way?
 
         # define network parameters
         self.input2rnn_input = FlattenInput2RNNInput(self.input_shape)
@@ -69,6 +70,8 @@ class NNIWF(BaseModel):
         # REQUIRED (lightning)
 
         # x.shape is (N, 2, Qx, F, T)
+        x = x.permute((4, 0, 1, 2, 3))
+        # x.shape is (T, N, 2, Qx, F)
         rnn_input = self.input2rnn_input(x)
         # rnn.shape is (T, N, 2*Qx*F)
         h, _ = self.rnn(rnn_input)
@@ -84,15 +87,15 @@ class NNIWF(BaseModel):
         # x is of shape (T, N, 2, Qx)
         # dz is of shape (T, N, 2, Qz)
 
-        T, N = x.shape[0:1]
+        T, N = x.shape[0:2]
         _, Qz, Qx = self.output_shape
         assert(x.shape == (T, N, 2, Qx))
         assert(dz.shape == (T, N, 2, Qz))
 
-        Rx = ctorch.calc_scm(x, complex_dim=2, smoothing_dim=0, channels_dim=3)
-        # Rx.shape is (N, 2, Qx, Qx)
         x = x.permute((2, 1, 3, 0))
         # x.shape is now (2, N, Qx, T)
+        Rx = ctorch.calc_scm(x, complex_dim=0, smoothing_dim=3, channels_dim=2)
+        # Rx.shape is (2, N, Qx, Qx)
         x_nb_transformed = ctorch.solve(x, Rx, complex_dim=0)
         # x_nb_transformed is of shape (2, N, Qx, T)
         # permute to (T, 2, N, Qx)
@@ -124,6 +127,10 @@ class NNIWF(BaseModel):
         else:
             raise NotImplementedError
 
+    def _get_center_freq_index(self):
+        dataset = self._Dataset(self.hparams.data_path, train=True, preload=False, **self.dataset_args)
+        _, _, index = dataset._get_freqs_indices()
+        return index
 
     def _get_dataset_args(self):
         # REQUIRED
@@ -161,12 +168,10 @@ class FlattenInput2RNNInput(Input2RNNInput):
         super().__init__(input_shape)
 
     def forward(self, x):
-        # x is of shape (N, 2, Q_in, F, T)
+        # x is of shape (T, N, 2, Q_in, F)
         # features is of shape (T, N, 2*Q_in*F)
 
-        features = x.permute((4, 0, 1, 2, 3))
-        features = features.view((*features.shape[:2], -1))
-        return features
+        return x.view((*x.shape[:2], -1))
 
     def get_output_shape(self):
         _, Q_in, F, _ = self.input_shape

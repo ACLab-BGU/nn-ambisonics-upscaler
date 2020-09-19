@@ -61,10 +61,11 @@ for i=start_index:num_of_files
     [R, R_scaling] = cast_to(R, opts.R_dtype, 1);
     seed = i; %#ok<NASGU>
     nfft = opts.nfft; %#ok<NASGU>
+    stft_hop_size = opts.stft_hop_size;
     N_R = opts.target_sh_order;
     is_real_sh = opts.real_sh;
     num_of_reflections = opts.number_of_reflections;
-    vars = {"R", "fs", "freq", "seed", "nfft", "R_scaling", "N_R", "is_real_sh", "num_of_reflections"}; %#ok<CLARRSTR>
+    vars = {"R", "fs", "freq", "seed", "nfft", "stft_hop_size", "R_scaling", "N_R", "is_real_sh", "num_of_reflections"}; %#ok<CLARRSTR>
     
     %% signals
     if opts.output_signals

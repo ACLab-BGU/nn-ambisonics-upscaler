@@ -11,9 +11,10 @@ import src.utils.complex_torch as ctorch
 
 
 def get_sliced_stft(x, nfft, freq_bins_range):
+    # TODO: don't hardcode hop_length, use the data parameters (need to fit both new and old data)
     # x is of shape (time, channels)
     x = torch_stft_nd(torch.from_numpy(x), time_dim=0,
-                      n_fft=nfft, hop_length=nfft // 2, onesided=True, window=torch.hann_window(nfft))
+                      n_fft=nfft, hop_length=nfft//2, onesided=True, window=torch.hann_window(nfft))
     # x_stft is of shape (channels, freq, time, real/imag)
 
     # slice to a single freq
@@ -32,7 +33,7 @@ def load_stft_slice(d, center_freq_hz, bandwidth_hz, sh_order_sig=float("inf"),
     # get y (the SCM)
     y = d['R']
     # y is now a complex numpy array. convert to a real torch.tensor
-    y = ctorch.from_numpy(y,complex_dim=0)
+    y = ctorch.from_numpy(y, complex_dim=0)
     # y is now of shape (2, channels_out, channels_out)
 
     # get x (time-frequency signal) by computing STFT and choosing relevant frequency channels
@@ -106,13 +107,16 @@ class Dataset(data.Dataset):
     def __init__(self, root, center_frequency, bandwidth, transform=None, preload=True, dtype=torch.float32, train=True,
                  sh_order_sig=float("inf"), sh_order_scm=float("inf"), time_len_sig=float("inf"), use_cross_scm=False):
 
-        self.dtype = dtype
+        self.center_frequency = center_frequency
+        self.bandwidth = bandwidth
         self.transform = transform
+        self.dtype = dtype
         self.preload_flag = preload
         self.sh_order_sig = sh_order_sig
         self.sh_order_scm = sh_order_scm
         self.time_len_sig = time_len_sig
         self.use_cross_scm = use_cross_scm
+        self.vec2mat_cache = None
 
         if train:
             root = os.path.join(root, 'train')
@@ -122,9 +126,6 @@ class Dataset(data.Dataset):
         assert len(self.filenames) > 0, 'data folder is empty'
         self.len = len(self.filenames)
 
-        self.center_frequency = center_frequency
-        self.bandwidth = bandwidth
-        self.vec2mat_cache = None
         if preload:
             self._preload()
 
@@ -146,6 +147,19 @@ class Dataset(data.Dataset):
                                sh_order_scm=self.sh_order_scm, time_len_sig=self.time_len_sig,
                                cross_scm=self.use_cross_scm)
         return x, y
+
+    def _get_freqs_indices(self):
+        ''' returns the center frequency index (absolute and relative), and frequency range indices'''
+        d, _ = load_data_file(self.filenames[0], self.vec2mat_cache)
+
+        freq_to_bin = lambda f: int(np.argmin(np.abs(d['freq'] - f)))
+        center_frequency_index = freq_to_bin(self.center_frequency)
+        bin_low = freq_to_bin(self.center_frequency - self.bandwidth / 2)
+        bin_high = 2 * center_frequency_index - bin_low
+        frequency_range_indices = range(bin_low, bin_high + 1)
+        center_frequency_index_relative = center_frequency_index-frequency_range_indices[0]
+
+        return center_frequency_index, frequency_range_indices, center_frequency_index_relative
 
     def __getitem__(self, item: int):
         """

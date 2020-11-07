@@ -2,13 +2,16 @@ import numpy as np
 import torch
 from torch import nn
 
+# default complex dimension for the complex functions
+def_complex_dim = None
 
 def l2_sq_complex(x) -> torch.Tensor:
     # x: ((N, M, L), (N, M, L))
     return torch.sum(x[0] ** 2 + x[1] ** 2) / x[0].shape[0]
 
 
-def get_real_imag_parts(x):
+def get_real_imag_parts_old(x):
+    # do not use, use get_real_imag_parts instead
     # x: (_, 2, _, _)
 
     x_real = x[:, 0]
@@ -25,13 +28,22 @@ def cat_real_imag_parts(x_real, x_imag):
     return torch.cat((x_real.view(shape_vec), x_imag.view(shape_vec)), dim=1)
 
 
-def complex_mm(x, y):
-    # x - ((N, M, L), (N, M, L))
-    # y - ((N, L, K), (N, L, K))
-    # out - ((N, M, K), (N, M, K))
+def get_real_imag_parts(x, complex_dim=def_complex_dim):
+    if complex_dim is None:
+        assert (type(x) == list or type(x) == tuple) and (len(x) == 2), 'invalid input type'
+        x_real, x_imag = x
+    else:
+        assert x.shape[complex_dim] == 2, "invalid input dimensions, complex dimensions must be of size 2"
+        x_real = torch.narrow(x, complex_dim, 0, 1)
+        x_imag = torch.narrow(x, complex_dim, 1, 1)
+    return x_real, x_imag
 
-    x_real, x_imag = x
-    y_real, y_imag = y
+def complex_mm(x, y, complex_dim=def_complex_dim):
+    # x - ((*_, M, L), (*_, M, L)) or tensor with complex channels at dimension complex_dim
+    # y - ((*_, L, K), (*_, L, K)) or tensor with complex channels at dimension complex_dim
+    # out - ((*_, M, K), (*_, M, K))
+    x_real, x_imag = get_real_imag_parts(x, complex_dim)
+    y_real, y_imag = get_real_imag_parts(y, complex_dim)
 
     out_real = torch.matmul(x_real, y_real) - torch.matmul(x_imag, y_imag)
     out_imag = torch.matmul(x_real, y_imag) + torch.matmul(x_imag, y_real)
@@ -40,9 +52,9 @@ def complex_mm(x, y):
 
 
 def complex_outer_product(x, y=None):
-    # x - ((N, Q, L), (N, Q, L))
-    # y - ((N, Q, L), (N, Q, L))
-    # out - ((N, Q, Q), (N, Q, Q))
+    # x - ((*_, Q, L), (*_, Q, L))
+    # y - ((*_, Q, L), (*_, Q, L))
+    # out - ((*_, Q, Q), (*_, Q, Q))
 
     if y is None:
         y = x
@@ -50,7 +62,7 @@ def complex_outer_product(x, y=None):
     x_real, x_imag = x
     y_real, y_imag = y
 
-    return complex_mm((x_real, x_imag), (y_real.transpose(1, 2), -y_imag.transpose(1, 2)))
+    return complex_mm((x_real, x_imag), (y_real.transpose(-2, -1), -y_imag.transpose(-2, -1)))
 
 
 def complextorch2numpy(x, dim=0):

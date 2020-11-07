@@ -3,7 +3,6 @@ import os
 import pickle
 from pathlib import Path
 
-import matlab.engine
 import numpy as np
 import scipy.io as sio
 
@@ -18,10 +17,16 @@ target_sh_order = 4
 compact_cov = False
 path_data = os.path.join("..", "..", "data")
 output_format = "pickle"  # pickle/mat/npz
+nfft = 512
+stft_win_size = 512
+stft_hop_size = 256
 
 
 def gen_data(num_of_reflections, source_type, compact_cov, num_of_files, path_data, output_format):
     '''generate data using matlab'''
+
+    import matlab.engine
+
     eng = matlab.engine.start_matlab()
     eng.cd('MATLAB')
     eng.restoredefaultpath(nargout=0)
@@ -35,7 +40,8 @@ def gen_data(num_of_reflections, source_type, compact_cov, num_of_files, path_da
 
             # generate file with matlab and save to mat file
             eng.make_image_method_data(num_of_files, 1, "folder_path", folder_path, "number_of_reflections", refs,
-                                       "source_type", sig, "duration", sig_length, "target_sh_order", target_sh_order,"compact_cov", compact_cov)
+                                       "source_type", sig, "duration", sig_length, "target_sh_order", target_sh_order,
+                                       "nfft",nfft,"stft_win_size",stft_win_size,"stft_hop_size",stft_hop_size)
 
             # convert files to a better format
             # TODO: check more efficient alternatives, instead of saving mat files and then converting

@@ -17,7 +17,7 @@ tensorboard==2.0.0
 torch==1.5.1
 torchvision==0.6.0a0+35d732a
 tqdm @ file:///home/conda/feedstock_root/build_artifacts/tqdm_1593390011681/work
-Werkzeug==1.0.1
+Werkzeug==2.2.3
 
 matplotlib~=3.2.2
 yaml~=0.2.5
